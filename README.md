@@ -1,2 +1,5 @@
-# nim-mycin
-Implementation of toy Mycin expert system in Nim
+# nim-mycin (wip)
+
+Implementation of toy Mycin expert system in Nim.
+
+For learning Nim, and to get reacquainted with rule based systems in the LLM era.
