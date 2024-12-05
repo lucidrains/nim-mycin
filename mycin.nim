@@ -1,7 +1,8 @@
 import std/[
   tables,
   options,
-  sugar
+  sugar,
+  strutils
 ]
 
 # confidence factor related type and functions
@@ -53,16 +54,13 @@ type
   ParameterValue = object
     case kind: ParameterType
     of String:
-      string_value: string
-      string_valid: Option[seq[string]]
+      string_value: Option[string]
     of Float:
-      float_value: float
-      float_valid: Option[seq[float]]
+      float_value: Option[float]
     of Integer:
-      integer_value: int
-      integer_valid: Option[seq[int]]
+      integer_value: Option[int]
     of Boolean:
-      boolean_value: bool
+      boolean_value: Option[bool]
 
 proc eq(a, b: ParameterValue): bool =
   if a.kind != b.kind:
@@ -85,7 +83,46 @@ type
     name: string
     context_name: string
     ask_first: bool
-    value: ParameterValue
+    case kind: ParameterType
+    of String:
+      string_valid: Option[seq[string]]
+    of Float:
+      float_valid: Option[seq[float]]
+    of Integer:
+      integer_valid: Option[seq[int]]
+    of Boolean:
+      discard
+
+proc parse_bool(input: string): Option[bool] =
+  if input == "true":
+    result = some(true)
+  elif input == "false":
+    result = some(false)
+  else:
+    result = none(bool)
+
+proc parse_int_to_option(input: string): Option[int] =
+  try:
+    result = some(parse_int(input))
+  except ValueError:
+    result = none(int)
+
+proc parse_float_to_option(input: string): Option[float] =
+  try:
+    result = some(parse_float(input))
+  except ValueError:
+    result = none(float)
+
+proc from_string(parameter: Parameter, input: string): ParameterValue =
+  case parameter.kind:
+  of String:
+    result = ParameterValue(kind: String, string_value: some(input))
+  of Integer:
+    result = ParameterValue(kind: Integer, integer_value: parse_int_to_option(input))
+  of Float:
+    result = ParameterValue(kind: Float, float_value: parse_float_to_option(input))
+  of Boolean:
+    result = ParameterValue(kind: Boolean, boolean_value: parse_bool(input))
 
 # context
 
@@ -154,42 +191,36 @@ proc main() =
     name: "name",
     context_name: "patient",
     ask_first: true,
-    value: ParameterValue(kind: String)
+    kind: String
   ))
 
   expert.add_param(Parameter(
     name: "sex",
     context_name: "patient",
     ask_first: true,
-    value: ParameterValue(
-      kind: String,
-      string_valid: some(@["M", "F"])
-    )
+    kind: String,
+    string_valid: some(@["M", "F"])
   ))
 
   expert.add_param(Parameter(
     name: "age",
     context_name: "patient",
     ask_first: true,
-    value: ParameterValue(
-      kind: Integer
-    )
+    kind: Integer
   ))
 
   expert.add_param(Parameter(
     name: "burn",
     context_name: "patient",
     ask_first: true,
-    value: ParameterValue(
-      kind: String,
-      string_valid: @["no", "mild", "serious"].some
-    )
+    kind: String,
+    string_valid: @["no", "mild", "serious"].some
   ))
 
   expert.add_param(Parameter(
     name: "compromised-host",
     context_name: "patient",
-    value: ParameterValue(kind: Boolean)
+    kind: Boolean
   ))
 
   # culture params
@@ -198,19 +229,15 @@ proc main() =
     name: "site",
     context_name: "culture",
     ask_first: true,
-    value: ParameterValue(
-      kind: String,
-      string_valid: @["blood"].some
-    )
+    kind: String,
+    string_valid: @["blood"].some
   ))
 
   expert.add_param(Parameter(
     name: "site",
     context_name: "culture",
     ask_first: true,
-    value: ParameterValue(
-      kind: Integer
-    )
+    kind: Integer
   ))
 
   # organism
@@ -219,45 +246,37 @@ proc main() =
     name: "identity",
     context_name: "organism",
     ask_first: true,
-    value: ParameterValue(
-      kind: String,
-      string_valid: @[
-        "pseudomonas",
-        "klebsiella",
-        "enterobacteriaceae",
-        "staphylococcus",
-        "bacteroides",
-        "streptococcus"
+    kind: String,
+    string_valid: @[
+      "pseudomonas",
+      "klebsiella",
+      "enterobacteriaceae",
+      "staphylococcus",
+      "bacteroides",
+      "streptococcus"
     ].some
-  )
   ))
 
   expert.add_param(Parameter(
     name: "gram",
     context_name: "organism",
     ask_first: true,
-    value: ParameterValue(
-      kind: String,
-      string_valid: @["rod", "coccus"].some
-    )
+    kind: String,
+    string_valid: @["rod", "coccus"].some
   ))
 
   expert.add_param(Parameter(
     name: "morphology",
     context_name: "organism",
-    value: ParameterValue(
-      kind: String,
-      string_valid: @["aerobic", "anaerobic"].some
-    )
+    kind: String,
+    string_valid: @["aerobic", "anaerobic"].some
   ))
 
   expert.add_param(Parameter(
     name: "growth-conformation",
     context_name: "organism",
-    value: ParameterValue(
-      kind: String,
-      string_valid: @["chains", "pairs", "clumps"].some
-    )
+    kind: String,
+    string_valid: @["chains", "pairs", "clumps"].some
   ))
 
   # add rules
@@ -268,7 +287,7 @@ proc main() =
       param_name: param,
       context_name: context,
       operation: operation,
-      value: ParameterValue(kind: String, string_value: value)
+      value: ParameterValue(kind: String, string_value: value.some)
     )
 
   proc bool_cond(param: string, context: string, operation: CondMatchOp,
@@ -277,7 +296,7 @@ proc main() =
       param_name: param,
       context_name: context,
       operation: operation,
-      value: ParameterValue(kind: Boolean, boolean_value: value)
+      value: ParameterValue(kind: Boolean, boolean_value: value.some)
     )
 
   expert.add_rule(Rule(
