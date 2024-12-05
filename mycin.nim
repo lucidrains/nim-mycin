@@ -116,13 +116,43 @@ proc parse_float_to_option(input: string): Option[float] =
 proc from_string(parameter: Parameter, input: string): ParameterValue =
   case parameter.kind:
   of String:
-    result = ParameterValue(kind: String, string_value: some(input))
+
+    let valid = parameter.string_valid
+    var string_value: Option[string]
+
+    if valid.is_some and valid.get.contains(input):
+      string_value = some(input)
+    else:
+      string_value = none(string)
+
+    result = ParameterValue(kind: String, string_value: string_value)
+
   of Integer:
-    result = ParameterValue(kind: Integer, integer_value: parse_int_to_option(input))
+
+    let valid = parameter.integer_valid
+    var integer_value = parse_int_to_option(input)
+
+    if valid.is_some and integer_value.is_some and
+        not valid.get.contains(integer_value.get):
+      integer_value = none(int)
+
+    result = ParameterValue(kind: Integer, integer_value: integer_value)
+
   of Float:
-    result = ParameterValue(kind: Float, float_value: parse_float_to_option(input))
+    let valid = parameter.float_valid
+    var float_value = parse_float_to_option(input)
+
+    if valid.is_some and float_value.is_some and
+        not valid.get.contains(float_value.get):
+      float_value = none(float)
+
+    result = ParameterValue(kind: Float, float_value: float_value)
+
   of Boolean:
     result = ParameterValue(kind: Boolean, boolean_value: parse_bool(input))
+
+proc ask(parameter: Parameter): ParameterValue =
+  parameter.from_string(read_line(stdin))
 
 # context
 
@@ -234,7 +264,7 @@ proc main() =
   ))
 
   expert.add_param(Parameter(
-    name: "site",
+    name: "days-old",
     context_name: "culture",
     ask_first: true,
     kind: Integer
