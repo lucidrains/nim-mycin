@@ -1,5 +1,7 @@
 import std/[
   tables,
+  hashes,
+  strformat,
   options,
   sugar,
   strutils
@@ -76,7 +78,18 @@ proc eq(a, b: ParameterValue): bool =
   of Boolean:
     result = a.boolean_value == b.boolean_value
 
-  # use object variants in nim
+proc `$`(value: ParameterValue): string = 
+  case value.kind:
+  of String:
+    result = $value.string_value
+  of Integer:
+    result = $value.integer_value
+  of Float:
+    result = $value.float_value
+  of Boolean:
+    result = $value.boolean_value
+
+# use object variants in nim
 
 type
   Parameter = object
@@ -163,9 +176,33 @@ type
     initial_data: seq[string] = @[]
     goals: seq[string] = @[]
 
-proc instantiate(c: Context): (string, int) =
+proc init(c: Context): (string, int) =
   inc(c.count)
   (c.name, c.count)
+
+
+# instance and findings
+
+type
+  Instance = (int, string)
+
+  Finding = (string, seq[ParameterValue])
+
+  Findings = Table[
+    Instance,
+    seq[Finding]
+  ]
+
+proc report_findings(findings_table: Findings) = 
+
+  for inst, findings in findings_table.pairs:
+    echo &"Findings for {inst}:"
+
+    for param, finding in findings:
+      let (finding_name, param_values) = finding
+
+      let possibilities = param_values.join
+      echo &"{param} - {possibilities}"
 
 # condition
 
