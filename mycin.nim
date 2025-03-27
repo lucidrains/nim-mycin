@@ -4,7 +4,8 @@ import std/[
   strformat,
   options,
   sugar,
-  strutils
+  sequtils,
+  strutils,
 ]
 
 # confidence factor related type and functions
@@ -47,6 +48,9 @@ proc is_true(cf: Cf): bool =
 proc is_false(cf: Cf): bool =
   cf.is_valid and (cf.value < (1.0 - cf.cutoff))
 
+proc `$`(cf: Cf): string =
+  $cf.value
+
 # parameters
 
 type
@@ -78,16 +82,22 @@ proc eq(a, b: ParameterValue): bool =
   of Boolean:
     result = a.boolean_value == b.boolean_value
 
+proc to_str[T](value: Option[T]): string =
+  if value.is_some:
+    result = $value.get
+  else:
+    result = ""
+
 proc `$`(value: ParameterValue): string = 
   case value.kind:
   of String:
-    result = $value.string_value
+    result = to_str(value.string_value)
   of Integer:
-    result = $value.integer_value
+    result = to_str(value.integer_value)
   of Float:
-    result = $value.float_value
+    result = to_str(value.float_value)
   of Boolean:
-    result = $value.boolean_value
+    result = to_str(value.boolean_value)
 
 # use object variants in nim
 
@@ -180,28 +190,36 @@ proc init(c: Context): (string, int) =
   inc(c.count)
   (c.name, c.count)
 
-
 # instance and findings
 
 type
   Instance = (int, string)
 
-  Finding = (string, seq[ParameterValue])
+  ParameterValueAndConfidence = (ParameterValue, Cf)
+
+  Finding = (string, seq[ParameterValueAndConfidence])
 
   Findings = Table[
     Instance,
     seq[Finding]
   ]
 
-proc report_findings(findings_table: Findings) = 
+  FindingsRef = ref Findings
+
+proc report_findings(findings_table: ref Findings) = 
 
   for inst, findings in findings_table.pairs:
-    echo &"Findings for {inst}:"
+    let (inst_id, inst_name) = inst
+    echo &"Findings for {inst_id}-{inst_name}:"
 
     for param, finding in findings:
-      let (finding_name, param_values) = finding
+      let (finding_name, param_values_and_cf) = finding
 
-      let possibilities = param_values.join
+      let possibilities = param_values_and_cf.map(value_and_cf => (
+        let (value, cf) = value_and_cf
+        &"{$value}-{cf}"
+      )).join
+
       echo &"{param} - {possibilities}"
 
 # condition
@@ -242,6 +260,10 @@ proc add_param(expert: ExpertSystem, p: Parameter) =
 
 proc add_rule(expert: ExpertSystem, r: Rule) =
   expert.rules.add(r)
+
+proc execute(expert: ExpertSystem, context_names: seq[string]) =
+  for context_name in context_names:
+    echo context_name
 
 # main
 
@@ -445,6 +467,8 @@ proc main() =
     ],
     cf: 0.7
   ))
+
+  expert.execute(@["patient", "culture", "organism"])
 
 # execute main
 
