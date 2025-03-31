@@ -260,7 +260,7 @@ proc clear(expert: ExpertSystem) =
   expert.current_rule = none(string)
 
 proc set_current_rule(expert: ExpertSystem, rule: string) =
-  expert.current_rule = rule.some
+  expert.current_rule = rule.some 
 
 proc add_context(expert: ExpertSystem, c: Context) =
   expert.contexts.add(c)
@@ -271,11 +271,23 @@ proc add_param(expert: ExpertSystem, p: Parameter) =
 proc add_rule(expert: ExpertSystem, r: Rule) =
   expert.rules.add(r)
 
+proc find_context_by_name(expert: ExpertSystem, context_name: string): Option[Context] =
+  for context in expert.contexts:
+    if context.name == context_name:
+      result = some(context)
+
 proc execute(expert: ExpertSystem, context_names: seq[string]) =
   echo "Beginning execution. For help answering questions, type \"help\"."
 
   for context_name in context_names:
-    echo context_name
+
+    let maybe_context = expert.find_context_by_name(context_name)
+
+    if not maybe_context.is_some:
+      echo &"context with name {context_name} not found, aborting"
+      break
+
+    let context = maybe_context.get
 
     expert.set_current_rule("initial")
 
