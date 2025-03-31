@@ -251,6 +251,16 @@ type
     contexts: seq[Context] = @[]
     parameters: seq[Parameter] = @[]
     rules: seq[Rule] = @[]
+    current_rule: Option[string] = none(string)
+
+proc clear(expert: ExpertSystem) =
+  expert.contexts.set_len(0)
+  expert.parameters.set_len(0)
+  expert.rules.set_len(0)
+  expert.current_rule = none(string)
+
+proc set_current_rule(expert: ExpertSystem, rule: string) =
+  expert.current_rule = rule.some
 
 proc add_context(expert: ExpertSystem, c: Context) =
   expert.contexts.add(c)
@@ -262,8 +272,14 @@ proc add_rule(expert: ExpertSystem, r: Rule) =
   expert.rules.add(r)
 
 proc execute(expert: ExpertSystem, context_names: seq[string]) =
+  echo "Beginning execution. For help answering questions, type \"help\"."
+
   for context_name in context_names:
     echo context_name
+
+    expert.set_current_rule("initial")
+
+    expert.set_current_rule("goal")
 
 # main
 
