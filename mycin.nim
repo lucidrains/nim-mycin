@@ -180,20 +180,25 @@ proc ask(parameter: Parameter): ParameterValue =
 # context
 
 type
+  Instance = (int, string)
+
   Context = ref object
     name: string
     count: int = 0
     initial_data: seq[string] = @[]
     goals: seq[string] = @[]
+    current_instance: Option[Instance] = none(Instance)
 
-proc init(c: Context): (string, int) =
+proc init(c: Context): Instance =
   inc(c.count)
-  (c.name, c.count)
+  let instance = (c.count, c.name)
+
+  c.current_instance = some(instance)
+  instance
 
 # instance and findings
 
 type
-  Instance = (int, string)
 
   ParameterValueAndConfidence = (ParameterValue, Cf)
 
@@ -252,6 +257,7 @@ type
     parameters: seq[Parameter] = @[]
     rules: seq[Rule] = @[]
     current_rule: Option[string] = none(string)
+    current_instance: Instance
 
 proc clear(expert: ExpertSystem) =
   expert.contexts.set_len(0)
@@ -276,18 +282,24 @@ proc find_context_by_name(expert: ExpertSystem, context_name: string): Option[Co
     if context.name == context_name:
       result = some(context)
 
+proc init_context(expert: ExpertSystem, context_name: string) =
+  let maybe_context = expert.find_context_by_name(context_name)
+
+  if not maybe_context.is_some:
+    echo &"context with name {context_name} not found, aborting"
+    return
+
+  let context = maybe_context.get
+  let instance = context.init()
+
+  expert.current_instance = instance
+
 proc execute(expert: ExpertSystem, context_names: seq[string]) =
   echo "Beginning execution. For help answering questions, type \"help\"."
 
   for context_name in context_names:
 
-    let maybe_context = expert.find_context_by_name(context_name)
-
-    if not maybe_context.is_some:
-      echo &"context with name {context_name} not found, aborting"
-      break
-
-    let context = maybe_context.get
+    expert.init_context(context_name)
 
     expert.set_current_rule("initial")
 
