@@ -281,33 +281,67 @@ proc add_param(expert: ExpertSystem, p: Parameter) =
 proc add_rule(expert: ExpertSystem, r: Rule) =
   expert.rules.add(r)
 
+proc find_param_by_name(expert: ExpertSystem, param_name: string): Option[Parameter] =
+  for parameter in expert.parameters:
+    if parameter.name == param_name:
+      result = some(parameter)
+
 proc find_context_by_name(expert: ExpertSystem, context_name: string): Option[Context] =
   for context in expert.contexts:
     if context.name == context_name:
       result = some(context)
 
-proc init_context(expert: ExpertSystem, context_name: string) =
+proc init_context(expert: ExpertSystem, context_name: string): Context =
   let maybe_context = expert.find_context_by_name(context_name)
 
   if not maybe_context.is_some:
     echo &"context with name {context_name} not found, aborting"
     return
 
-  let context = maybe_context.get
-  let instance = context.init()
+  result = maybe_context.get
+  let instance = result.init()
 
   expert.current_instance = instance
 
-proc execute(expert: ExpertSystem, context_names: seq[string]) =
+proc find_out(expert: ExpertSystem, param: Parameter) =
+  discard
+
+proc find_out(expert: ExpertSystem, param: Parameter, instance: Instance) =
+  discard
+
+proc execute(expert: ExpertSystem, context_names: seq[string]): FindingsRef =
   echo "Beginning execution. For help answering questions, type \"help\"."
+
+  # backwards chaining
 
   for context_name in context_names:
 
-    expert.init_context(context_name)
+    let context = expert.init_context(context_name)
 
     expert.set_current_rule("initial")
 
+    for param_name in context.initial_data:
+      let param = expert.find_param_by_name(param_name)
+
+      if param.is_none:
+        continue
+
+      expert.find_out(param.get)
+
     expert.set_current_rule("goal")
+
+    for param_name in context.goals:
+      let param = expert.find_param_by_name(param_name)
+
+      if param.is_none:
+        continue
+
+      expert.find_out(param.get)
+
+  # writing to findings table
+
+  for context_name in context_names:
+    discard
 
 # main
 
@@ -512,7 +546,7 @@ proc main() =
     cf: 0.7
   ))
 
-  expert.execute(@["patient", "culture", "organism"])
+  discard expert.execute(@["patient", "culture", "organism"])
 
 # execute main
 
