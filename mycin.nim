@@ -180,7 +180,9 @@ proc ask(parameter: Parameter): ParameterValue =
 # context
 
 type
-  Instance = (int, string)
+  Instance = tuple
+    id: int
+    name: string
 
   Context = ref object
     name: string
@@ -191,7 +193,7 @@ type
 
 proc init(c: Context): Instance =
   inc(c.count)
-  let instance = (c.count, c.name)
+  let instance = (id: c.count, name: c.name)
 
   c.current_instance = some(instance)
   instance
@@ -200,9 +202,13 @@ proc init(c: Context): Instance =
 
 type
 
-  ParameterValueAndConfidence = (ParameterValue, Cf)
+  ParameterValueAndConfidence = tuple
+    value: ParameterValue
+    confidence: Cf
 
-  Finding = (string, seq[ParameterValueAndConfidence])
+  Finding = tuple
+    finding_name: string
+    values: seq[ParameterValueAndConfidence]
 
   Findings = Table[
     Instance,
@@ -214,13 +220,11 @@ type
 proc report_findings(findings_table: ref Findings) = 
 
   for inst, findings in findings_table.pairs:
-    let (inst_id, inst_name) = inst
-    echo &"Findings for {inst_id}-{inst_name}:"
+    echo &"Findings for {inst.id}-{inst.name}:"
 
     for param, finding in findings:
-      let (finding_name, param_values_and_cf) = finding
 
-      let possibilities = param_values_and_cf.map(value_and_cf => (
+      let possibilities = finding.values.map(value_and_cf => (
         let (value, cf) = value_and_cf
         &"{$value}-{cf}"
       )).join
