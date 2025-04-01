@@ -303,11 +303,12 @@ proc init_context(expert: ExpertSystem, context_name: string): Context =
 
   expert.current_instance = instance
 
-proc find_out(expert: ExpertSystem, param: Parameter) =
-  discard
-
 proc find_out(expert: ExpertSystem, param: Parameter, instance: Instance) =
   discard
+
+proc find_out(expert: ExpertSystem, param: Parameter) =
+  let instance = expert.current_instance
+  expert.find_out(param, instance)
 
 proc execute(expert: ExpertSystem, context_names: seq[string]): FindingsRef =
   echo "Beginning execution. For help answering questions, type \"help\"."
