@@ -319,7 +319,8 @@ proc get_values(): seq[ParameterValueAndConfidence] =
   @[]
 
 proc find_out(expert: ExpertSystem, param: Parameter, instance: Instance) =
-  discard
+  echo &"what is the {param.name} for {instance.name}-{instance.id}?"
+  let value = param.ask()
 
 proc find_out(expert: ExpertSystem, param: Parameter) =
   let instance = expert.current_instance
