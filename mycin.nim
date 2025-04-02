@@ -6,6 +6,7 @@ import std/[
   sugar,
   sequtils,
   strutils,
+  sets
 ]
 
 # confidence factor related type and functions
@@ -190,6 +191,10 @@ type
     id: int
     name: string
 
+  ParameterForInstance = tuple
+    param_name: ParameterName
+    instance: Instance
+
   Context = ref object
     name: string
     count: int = 0
@@ -266,6 +271,9 @@ type
     rules: seq[Rule] = @[]
     current_rule: Option[string] = none(string)
     current_instance: Instance
+    knowns: HashSet[ParameterForInstance]
+    asked: HashSet[ParameterForInstance]
+    known_values: TableRef[ParameterForInstance, seq[ParameterValueAndConfidence]]
 
 proc clear(expert: ExpertSystem) =
   expert.contexts.set_len(0)
