@@ -102,8 +102,10 @@ proc `$`(value: ParameterValue): string =
 # use object variants in nim
 
 type
+  ParameterName = string
+
   Parameter = object
-    name: string
+    name: ParameterName
     context_name: string
     ask_first: bool
     case kind: ParameterType
@@ -207,17 +209,15 @@ type
     confidence: Cf
 
   Finding = tuple
-    finding_name: string
+    param_name: ParameterName
     values: seq[ParameterValueAndConfidence]
 
-  Findings = Table[
+  Findings = TableRef[
     Instance,
     seq[Finding]
   ]
 
-  FindingsRef = ref Findings
-
-proc report_findings(findings_table: ref Findings) = 
+proc report_findings(findings_table: Findings) = 
 
   for inst, findings in findings_table.pairs:
     echo &"Findings for {inst.id}-{inst.name}:"
@@ -303,6 +303,9 @@ proc init_context(expert: ExpertSystem, context_name: string): Context =
 
   expert.current_instance = instance
 
+proc get_values(): seq[ParameterValueAndConfidence] =
+  @[]
+
 proc find_out(expert: ExpertSystem, param: Parameter, instance: Instance) =
   discard
 
@@ -310,7 +313,7 @@ proc find_out(expert: ExpertSystem, param: Parameter) =
   let instance = expert.current_instance
   expert.find_out(param, instance)
 
-proc execute(expert: ExpertSystem, context_names: seq[string]): FindingsRef =
+proc execute(expert: ExpertSystem, context_names: seq[string]): Findings =
   echo "Beginning execution. For help answering questions, type \"help\"."
 
   # backwards chaining
@@ -339,11 +342,30 @@ proc execute(expert: ExpertSystem, context_names: seq[string]): FindingsRef =
 
       expert.find_out(param.get)
 
-  # writing to findings table
+    if context.goals.len == 0 or context.current_instance.is_none:
+      continue
 
-  for context_name in context_names:
-    discard
+    # writing to findings table
 
+    let result: Findings = new_table[Instance, seq[Finding]]()
+
+    var seq_findings: seq[Finding] = @[]
+
+    for param_name in context.goals:
+      let param = expert.find_param_by_name(param_name)
+
+      if param.is_none:
+        continue
+
+      let one_finding: Finding = (
+        param_name: param_name,
+        values: @[]
+      )
+
+      seq_findings.add(one_finding)
+
+    result[context.current_instance.get] = seq_findings
+    
 # main
 
 proc main() =
