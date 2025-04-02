@@ -145,7 +145,7 @@ proc from_string(parameter: Parameter, input: string): ParameterValue =
     let valid = parameter.string_valid
     var string_value: Option[string]
 
-    if valid.is_some and valid.get.contains(input):
+    if valid.is_none or valid.get.contains(input):
       string_value = some(input)
     else:
       string_value = none(string)
@@ -157,8 +157,10 @@ proc from_string(parameter: Parameter, input: string): ParameterValue =
     let valid = parameter.integer_valid
     var integer_value = parse_int_to_option(input)
 
-    if valid.is_some and integer_value.is_some and
-        not valid.get.contains(integer_value.get):
+    if (
+      valid.is_none or
+      (integer_value.is_some and not valid.get.contains(integer_value.get))
+    ):
       integer_value = none(int)
 
     result = ParameterValue(kind: Integer, integer_value: integer_value)
@@ -167,8 +169,10 @@ proc from_string(parameter: Parameter, input: string): ParameterValue =
     let valid = parameter.float_valid
     var float_value = parse_float_to_option(input)
 
-    if valid.is_some and float_value.is_some and
-        not valid.get.contains(float_value.get):
+    if (
+      valid.is_none or
+      (float_value.is_some and not valid.get.contains(float_value.get))
+    ):
       float_value = none(float)
 
     result = ParameterValue(kind: Float, float_value: float_value)
@@ -177,7 +181,7 @@ proc from_string(parameter: Parameter, input: string): ParameterValue =
     result = ParameterValue(kind: Boolean, boolean_value: parse_bool(input))
 
 proc ask(parameter: Parameter): ParameterValue =
-  parameter.from_string(read_line(stdin))
+  result = parameter.from_string(read_line(stdin))
 
 # context
 
