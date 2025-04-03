@@ -229,6 +229,9 @@ type
 
 proc report_findings(findings_table: Findings) = 
 
+  if findings_table.is_nil:
+    return
+
   for inst, findings in findings_table.pairs:
     echo &"Findings for {inst.id}-{inst.name}:"
 
@@ -347,6 +350,8 @@ proc find_out(expert: ExpertSystem, param: Parameter) =
 proc execute(expert: ExpertSystem, context_names: seq[string]): Findings =
   echo "Beginning execution. For help answering questions, type \"help\"."
 
+  result = new_table[Instance, seq[Finding]]()
+
   # backwards chaining
 
   for context_name in context_names:
@@ -376,9 +381,9 @@ proc execute(expert: ExpertSystem, context_names: seq[string]): Findings =
     if context.goals.len == 0 or context.current_instance.is_none:
       continue
 
-    # writing to findings table
+    let instance = context.current_instance.get
 
-    let result: Findings = new_table[Instance, seq[Finding]]()
+    # writing to findings table
 
     var seq_findings: seq[Finding] = @[]
 
@@ -388,14 +393,16 @@ proc execute(expert: ExpertSystem, context_names: seq[string]): Findings =
       if param.is_none:
         continue
 
+      let param_instance: ParameterForInstance = (param.get.name, instance)
+
       let one_finding: Finding = (
         param_name: param_name,
-        values: @[]
+        values: expert.known_values.get_or_default(param_instance, @[])
       )
 
       seq_findings.add(one_finding)
 
-    result[context.current_instance.get] = seq_findings
+    result[instance] = seq_findings
 
 # main
 
@@ -600,7 +607,8 @@ proc main() =
     cf: 0.7
   ))
 
-  discard expert.execute(@["patient", "culture", "organism"])
+  let findings = expert.execute(@["patient", "culture", "organism"])
+  report_findings(findings)
 
 # execute main
 
