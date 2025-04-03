@@ -1,6 +1,5 @@
 import std/[
   tables,
-  hashes,
   strformat,
   options,
   sugar,
@@ -61,15 +60,19 @@ type
   ParameterValue = object
     case kind: ParameterType
     of String:
-      string_value: Option[string]
+      string_value: string
     of Float:
-      float_value: Option[float]
+      float_value: float
     of Integer:
-      integer_value: Option[int]
+      integer_value: int
     of Boolean:
-      boolean_value: Option[bool]
+      boolean_value: bool
 
-proc eq(a, b: ParameterValue): bool =
+  ParameterValueAndConfidence = tuple
+    value: ParameterValue
+    confidence: Cf
+
+proc `==`(a, b: ParameterValue): bool =
   if a.kind != b.kind:
     return false
 
@@ -83,22 +86,22 @@ proc eq(a, b: ParameterValue): bool =
   of Boolean:
     result = a.boolean_value == b.boolean_value
 
-proc to_str[T](value: Option[T]): string =
-  if value.is_some:
-    result = $value.get
+proc `$`[T](option_value: Option[T]): string =
+  if option_value.is_some:
+    result = $option_value.get
   else:
     result = ""
 
 proc `$`(value: ParameterValue): string = 
   case value.kind:
   of String:
-    result = to_str(value.string_value)
+    result = $value.string_value
   of Integer:
-    result = to_str(value.integer_value)
+    result = $value.integer_value
   of Float:
-    result = to_str(value.float_value)
+    result = $value.float_value
   of Boolean:
-    result = to_str(value.boolean_value)
+    result = $value.boolean_value
 
 # use object variants in nim
 
@@ -139,19 +142,20 @@ proc parse_float_to_option(input: string): Option[float] =
   except ValueError:
     result = none(float)
 
-proc from_string(parameter: Parameter, input: string): ParameterValue =
+proc from_string(
+  parameter: Parameter,
+  input: string
+): Option[ParameterValue] =
+
+  result = none(ParameterValue)
+
   case parameter.kind:
   of String:
 
     let valid = parameter.string_valid
-    var string_value: Option[string]
 
     if valid.is_none or valid.get.contains(input):
-      string_value = some(input)
-    else:
-      string_value = none(string)
-
-    result = ParameterValue(kind: String, string_value: string_value)
+      result = some(ParameterValue(kind: String, string_value: input))
 
   of Integer:
 
@@ -159,29 +163,30 @@ proc from_string(parameter: Parameter, input: string): ParameterValue =
     var integer_value = parse_int_to_option(input)
 
     if (
-      valid.is_none or
-      (integer_value.is_some and not valid.get.contains(integer_value.get))
+      integer_value.is_some and
+      (valid.is_none or valid.get.contains(integer_value.get))
     ):
-      integer_value = none(int)
-
-    result = ParameterValue(kind: Integer, integer_value: integer_value)
+      result = some(ParameterValue(kind: Integer, integer_value: integer_value.get))
 
   of Float:
     let valid = parameter.float_valid
     var float_value = parse_float_to_option(input)
 
     if (
-      valid.is_none or
-      (float_value.is_some and not valid.get.contains(float_value.get))
+      float_value.is_some and
+      (valid.is_none or not valid.get.contains(float_value.get))
     ):
-      float_value = none(float)
-
-    result = ParameterValue(kind: Float, float_value: float_value)
+      result = ParameterValue(kind: Float, float_value: float_value.get).some
 
   of Boolean:
-    result = ParameterValue(kind: Boolean, boolean_value: parse_bool(input))
+    let maybe_bool = parse_bool(input)
+    if maybe_bool.is_some:
+      result = ParameterValue(kind: Boolean, boolean_value: maybe_bool.get).some
 
-proc ask(parameter: Parameter): ParameterValue =
+proc ask(parameter: Parameter, question: Option[string]): Option[ParameterValue] =
+  if question.is_some:
+    echo question.get
+
   result = parameter.from_string(read_line(stdin))
 
 # context
@@ -212,10 +217,6 @@ proc init(c: Context): Instance =
 # instance and findings
 
 type
-
-  ParameterValueAndConfidence = tuple
-    value: ParameterValue
-    confidence: Cf
 
   Finding = tuple
     param_name: ParameterName
@@ -273,7 +274,7 @@ type
     current_instance: Instance
     knowns: HashSet[ParameterForInstance]
     asked: HashSet[ParameterForInstance]
-    known_values: TableRef[ParameterForInstance, seq[ParameterValueAndConfidence]]
+    known_values: Table[ParameterForInstance, seq[ParameterValueAndConfidence]]
 
 proc clear(expert: ExpertSystem) =
   expert.contexts.set_len(0)
@@ -319,8 +320,25 @@ proc get_values(): seq[ParameterValueAndConfidence] =
   @[]
 
 proc find_out(expert: ExpertSystem, param: Parameter, instance: Instance) =
-  echo &"what is the {param.name} for {instance.name}-{instance.id}?"
-  let value = param.ask()
+
+  let param_instance: ParameterForInstance = (param.name, instance)
+
+  # skip if already known
+
+  if param_instance in expert.knowns:
+    return
+
+  # ask for value
+
+  let maybe_value = param.ask(some(&"what is the {param.name} for {instance.name}-{instance.id}?"))
+
+  expert.knowns.incl(param_instance)
+
+  if maybe_value.is_some:
+    let known_value: ParameterValueAndConfidence = (maybe_value.get, Cf(value: 1.0))
+
+    var param_known_values = expert.known_values.get_or_default(param_instance, @[])
+    param_known_values.add(known_value)
 
 proc find_out(expert: ExpertSystem, param: Parameter) =
   let instance = expert.current_instance
@@ -378,7 +396,7 @@ proc execute(expert: ExpertSystem, context_names: seq[string]): Findings =
       seq_findings.add(one_finding)
 
     result[context.current_instance.get] = seq_findings
-    
+
 # main
 
 proc main() =
@@ -490,7 +508,7 @@ proc main() =
       param_name: param,
       context_name: context,
       operation: operation,
-      value: ParameterValue(kind: String, string_value: value.some)
+      value: ParameterValue(kind: String, string_value: value)
     )
 
   proc bool_cond(param: string, context: string, operation: CondMatchOp,
@@ -499,19 +517,19 @@ proc main() =
       param_name: param,
       context_name: context,
       operation: operation,
-      value: ParameterValue(kind: Boolean, boolean_value: value.some)
+      value: ParameterValue(kind: Boolean, boolean_value: value)
     )
 
   expert.add_rule(Rule(
     num: 52,
     premises: @[
-      str_cond("site", "culture", eq, "blood"),
-      str_cond("gram", "organism", eq, "neg"),
-      str_cond("morphology", "organism", eq, "rod"),
-      str_cond("aerobicity", "organism", eq, "anaerobic"),
+      str_cond("site", "culture", `==`, "blood"),
+      str_cond("gram", "organism", `==`, "neg"),
+      str_cond("morphology", "organism", `==`, "rod"),
+      str_cond("aerobicity", "organism", `==`, "anaerobic"),
     ],
     conclusions: @[
-      str_cond("identity", "organism", eq, "bacteroides")
+      str_cond("identity", "organism", `==`, "bacteroides")
     ],
     cf: 0.4
   ))
@@ -519,12 +537,12 @@ proc main() =
   expert.add_rule(Rule(
     num: 71,
     premises: @[
-      str_cond("gram", "organism", eq, "pos"),
-      str_cond("morphology", "organism", eq, "coccus"),
-      str_cond("growth-conformation", "organism", eq, "clumps"),
+      str_cond("gram", "organism", `==`, "pos"),
+      str_cond("morphology", "organism", `==`, "coccus"),
+      str_cond("growth-conformation", "organism", `==`, "clumps"),
     ],
     conclusions: @[
-      str_cond("identity", "organism", eq, "staphylococcus")
+      str_cond("identity", "organism", `==`, "staphylococcus")
     ],
     cf: 0.7
   ))
@@ -532,13 +550,13 @@ proc main() =
   expert.add_rule(Rule(
     num: 73,
     premises: @[
-      str_cond("site", "culture", eq, "blood"),
-      str_cond("gram", "organism", eq, "neg"),
-      str_cond("morphology", "organism", eq, "rod"),
-      str_cond("aerobicity", "organism", eq, "anaerobic")
+      str_cond("site", "culture", `==`, "blood"),
+      str_cond("gram", "organism", `==`, "neg"),
+      str_cond("morphology", "organism", `==`, "rod"),
+      str_cond("aerobicity", "organism", `==`, "anaerobic")
     ],
     conclusions: @[
-      str_cond("identity", "organism", eq, "bacteroides")
+      str_cond("identity", "organism", `==`, "bacteroides")
     ],
     cf: 0.9
   ))
@@ -546,12 +564,12 @@ proc main() =
   expert.add_rule(Rule(
     num: 73,
     premises: @[
-      str_cond("gram", "organism", eq, "neg"),
-      str_cond("morphology", "organism", eq, "rod"),
-      bool_cond("compromised-host", "patient", eq, true)
+      str_cond("gram", "organism", `==`, "neg"),
+      str_cond("morphology", "organism", `==`, "rod"),
+      bool_cond("compromised-host", "patient", `==`, true)
     ],
     conclusions: @[
-      str_cond("identity", "organism", eq, "pseudomonas")
+      str_cond("identity", "organism", `==`, "pseudomonas")
     ],
     cf: 0.6
   ))
@@ -559,12 +577,12 @@ proc main() =
   expert.add_rule(Rule(
     num: 107,
     premises: @[
-      str_cond("gram", "organism", eq, "neg"),
-      str_cond("morphology", "organism", eq, "rod"),
-      str_cond("aerobicity", "organism", eq, "aerobic")
+      str_cond("gram", "organism", `==`, "neg"),
+      str_cond("morphology", "organism", `==`, "rod"),
+      str_cond("aerobicity", "organism", `==`, "aerobic")
     ],
     conclusions: @[
-      str_cond("identity", "organism", eq, "enterobacteriaceae")
+      str_cond("identity", "organism", `==`, "enterobacteriaceae")
     ],
     cf: 0.8
   ))
@@ -572,12 +590,12 @@ proc main() =
   expert.add_rule(Rule(
     num: 165,
     premises: @[
-      str_cond("gram", "organism", eq, "pos"),
-      str_cond("morphology", "organism", eq, "coccus"),
-      str_cond("growth-conformation", "organism", eq, "chain")
+      str_cond("gram", "organism", `==`, "pos"),
+      str_cond("morphology", "organism", `==`, "coccus"),
+      str_cond("growth-conformation", "organism", `==`, "chain")
     ],
     conclusions: @[
-      str_cond("identity", "organism", eq, "streptococcus")
+      str_cond("identity", "organism", `==`, "streptococcus")
     ],
     cf: 0.7
   ))
