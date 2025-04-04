@@ -354,9 +354,6 @@ proc init_context(expert: ExpertSystem, context_name: string): Context =
 
   expert.current_instance = instance
 
-proc get_values(): seq[ParameterValueAndConfidence] =
-  @[]
-
 proc ask_value(
   expert: ExpertSystem,
   param: Parameter,
@@ -375,9 +372,9 @@ proc ask_value(
 proc find_out(
   expert: ExpertSystem,
   param: Parameter,
-  instance: Instance
 ) =
 
+  let instance = expert.current_instance
   let param_instance: ParameterForInstance = (param.name, instance)
 
   # skip if already known
@@ -411,7 +408,7 @@ proc find_out(
         curr_cf = Cf(value: CF_TRUE_VALUE)
 
         for condition in rule.premises:
-          expert.find_out(param, instance)
+          expert.find_out(param)
 
           let cf_from_condition = condition.evaluate(knowledge)
 
@@ -478,13 +475,6 @@ proc find_out(
 
   var param_known_values = expert.known_values.get_or_default(param_instance, @[])
   param_known_values.add(known_value)
-
-proc find_out(
-  expert: ExpertSystem,
-  param: Parameter
-) =
-  let instance = expert.current_instance
-  expert.find_out(param, instance)
 
 proc execute(
   expert: ExpertSystem,
