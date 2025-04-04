@@ -187,7 +187,7 @@ proc ask(parameter: Parameter, question: Option[string]): Option[ParameterValue]
   if question.is_some:
     echo question.get
 
-  result = parameter.from_string(read_line(stdin))
+  parameter.from_string(read_line(stdin))
 
 # context
 
@@ -284,6 +284,9 @@ proc clear(expert: ExpertSystem) =
   expert.parameters.set_len(0)
   expert.rules.set_len(0)
   expert.current_rule = none(string)
+  expert.asked.clear()
+  expert.knowns.clear()
+  expert.known_values.clear()
 
 proc set_current_rule(expert: ExpertSystem, rule: string) =
   expert.current_rule = rule.some 
@@ -322,7 +325,33 @@ proc init_context(expert: ExpertSystem, context_name: string): Context =
 proc get_values(): seq[ParameterValueAndConfidence] =
   @[]
 
-proc find_out(expert: ExpertSystem, param: Parameter, instance: Instance) =
+proc apply_rules(
+  expert: ExpertSystem,
+  param: Parameter,
+  instance: Instance
+): Option[ParameterValue] =
+  none(ParameterValue)
+
+proc ask_value(
+  expert: ExpertSystem,
+  param: Parameter,
+  instance: Instance
+): Option[ParameterValue] =
+
+  let param_for_instance: ParameterForInstance = (param.name, instance)
+
+  if param_for_instance in expert.asked:
+    return
+
+  expert.asked.incl(param_for_instance)
+
+  param.ask(some(&"what is the {param.name} for {instance.name}-{instance.id}?"))
+
+proc find_out(
+  expert: ExpertSystem,
+  param: Parameter,
+  instance: Instance
+) =
 
   let param_instance: ParameterForInstance = (param.name, instance)
 
@@ -331,23 +360,45 @@ proc find_out(expert: ExpertSystem, param: Parameter, instance: Instance) =
   if param_instance in expert.knowns:
     return
 
-  # ask for value
+  # ask or apply rules
 
-  let maybe_value = param.ask(some(&"what is the {param.name} for {instance.name}-{instance.id}?"))
+  var maybe_value: Option[ParameterValue]
+
+  if param.ask_first:
+    maybe_value = expert.ask_value(param, instance)
+
+    if maybe_value.is_none:
+      maybe_value = expert.apply_rules(param, instance)
+
+  else:
+    maybe_value = expert.apply_rules(param, instance)
+
+    if maybe_value.is_none:
+      maybe_value = expert.ask_value(param, instance)
+
+  # store knowledge from asking the user or applying the rule
+
+  if maybe_value.is_none:
+    return
 
   expert.knowns.incl(param_instance)
 
-  if maybe_value.is_some:
-    let known_value: ParameterValueAndConfidence = (maybe_value.get, Cf(value: 1.0))
+  let known_value: ParameterValueAndConfidence = (maybe_value.get, Cf(value: 1.0))
 
-    var param_known_values = expert.known_values.get_or_default(param_instance, @[])
-    param_known_values.add(known_value)
+  var param_known_values = expert.known_values.get_or_default(param_instance, @[])
+  param_known_values.add(known_value)
 
-proc find_out(expert: ExpertSystem, param: Parameter) =
+proc find_out(
+  expert: ExpertSystem,
+  param: Parameter
+) =
   let instance = expert.current_instance
   expert.find_out(param, instance)
 
-proc execute(expert: ExpertSystem, context_names: seq[string]): Findings =
+proc execute(
+  expert: ExpertSystem,
+  context_names: seq[string]
+): Findings =
   echo "Beginning execution. For help answering questions, type \"help\"."
 
   result = new_table[Instance, seq[Finding]]()
