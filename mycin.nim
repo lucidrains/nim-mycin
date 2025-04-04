@@ -390,7 +390,7 @@ proc find_out(
   proc apply_rules(): Option[ParameterValue] =
     let param_for_instance = (param.name, instance)
 
-    var knowledge = expert.known_values[param_for_instance]
+    var knowledge = expert.known_values.mget_or_put(param_for_instance, @[])
 
     # reject first
 
