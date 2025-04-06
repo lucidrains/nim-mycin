@@ -25,6 +25,7 @@ const
   CF_FALSE_VALUE = -1.0
   CF_UNKNOWN_VALUE = 0.0
   CF_CUTOFF = 0.2
+  INPUT_UNKNOWN_STRING = "unknown"
 
 type
   ConfidenceFactor = object
@@ -62,7 +63,7 @@ proc is_true(cf: Cf): bool =
   cf.is_valid and (cf.value > cf.cutoff)
 
 proc is_false(cf: Cf): bool =
-  cf.is_valid and (cf.value < (1.0 - cf.cutoff))
+  cf.is_valid and (cf.value < (cf.cutoff - 1.0))
 
 proc `$`(cf: Cf): string =
   $cf.value
@@ -160,10 +161,12 @@ proc parse_float_to_option(input: string): Option[float] =
 
 proc from_string(
   parameter: Parameter,
-  input: string
+  input: string,
+  unknown_input_value: string = INPUT_UNKNOWN_STRING
 ): Option[ParameterValue] =
 
-  result = none(ParameterValue)
+  if input == unknown_input_value:
+    return
 
   case parameter.kind:
   of String:
@@ -377,8 +380,7 @@ proc ask_value(
       confidence: Cf(value: CF_TRUE_VALUE)
     )
 
-    with_value(expert.known_values, param_for_instance, knowledge):
-      knowledge[].add(param_value_and_cf)
+    expert.known_values[param_for_instance].add(param_value_and_cf)
 
   maybe_parameter_value.is_some
 
@@ -396,63 +398,70 @@ proc apply_rules(
 
   discard expert.known_values.has_key_or_put(param_for_instance, @[])
 
-  with_value(expert.known_values, param_for_instance, knowledge):
-    # reject first
+  let rules = expert.rules.filter(rule => rule.conclusions.filter(cond => cond.param_name == param.name).len > 0)
 
-    for rule in expert.rules:
+  let knowledge = expert.known_values[param_for_instance]
 
-      var curr_cf: Cf
+  # reject first
+
+  for rule in rules:
+    var curr_cf: Cf = Cf(value: 0.0)
+
+    for condition in rule.premises:
+      let cf_from_condition = condition.evaluate(knowledge)
+
+      if cf_from_condition.is_false:
+        curr_cf = Cf(value: CF_FALSE_VALUE)
+        break
+
+    if not curr_cf.is_false:
+      curr_cf = Cf(value: CF_TRUE_VALUE)
 
       for condition in rule.premises:
-        let cf_from_condition = condition.evaluate(knowledge[])
+        let param = expert.find_param_by_name(condition.param_name)
 
-        if cf_from_condition.is_false:
+        if param.is_none:
+          continue
+
+        expert.find_out(param.get)
+
+        let cf_from_condition = condition.evaluate(knowledge)
+
+        curr_cf = curr_cf and cf_from_condition
+
+        if not curr_cf.is_true:
           curr_cf = Cf(value: CF_FALSE_VALUE)
           break
 
-      if not curr_cf.is_false:
-        curr_cf = Cf(value: CF_TRUE_VALUE)
+    let update_cf = Cf(value: curr_cf.value * rule.cf)
 
-        for condition in rule.premises:
-          expert.find_out(param)
+    if not update_cf.is_true:
+      continue
 
-          let cf_from_condition = condition.evaluate(knowledge[])
+    for conclusion in rule.conclusions:
 
-          curr_cf = curr_cf and cf_from_condition
+      # insert entry if not exists
 
-          if not curr_cf.is_true:
-            curr_cf = Cf(value: CF_FALSE_VALUE)
-            break
+      var
+        parameter_value: ParameterValue
+        cf: ConfidenceFactor
 
-      let update_cf = Cf(value: curr_cf.value * rule.cf)
+      var maybe_entry: Option[ParameterValueAndConfidence]
 
-      if not update_cf.is_true:
-        continue
+      for value_and_cf in knowledge:
+        if value_and_cf.value == conclusion.value:
+          maybe_entry = value_and_cf.some
+          break
 
-      for conclusion in rule.conclusions:
+      let entry: ParameterValueAndConfidence = if maybe_entry.is_none:
+        let new_entry: ParameterValueAndConfidence = (conclusion.value, Cf(value: CF_UNKNOWN_VALUE))
+        expert.known_values[param_for_instance].add(new_entry)
+        new_entry
+      else:
+        maybe_entry.get
 
-        # insert entry if not exists
-
-        var
-          parameter_value: ParameterValue
-          cf: ConfidenceFactor
-
-        var maybe_entry: Option[ParameterValueAndConfidence]
-
-        for value_and_cf in knowledge[]:
-          if value_and_cf.value == conclusion.value:
-            maybe_entry = value_and_cf.some
-            break
-
-        let entry: ParameterValueAndConfidence = if maybe_entry.is_none:
-          let new_entry: ParameterValueAndConfidence = (conclusion.value, Cf(value: CF_UNKNOWN_VALUE))
-          knowledge[].add(new_entry)
-          new_entry
-        else:
-          maybe_entry.get
-
-        cf = entry.confidence
-        cf.value = (cf or update_cf).value
+      cf = entry.confidence
+      cf.value = (cf or update_cf).value
 
     result = true
 
