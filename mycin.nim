@@ -372,21 +372,23 @@ proc ask_value(
 
   let maybe_parameter_value = param.ask(some(&"what is the {param.name} for {instance.name}-{instance.id}?"))
 
-  if maybe_parameter_value.is_some:
-    discard expert.known_values.has_key_or_put(param_for_instance, @[])
+  if maybe_parameter_value.is_none:
+    return false
 
-    let param_value_and_cf: ParameterValueAndConfidence = (
-      value: maybe_parameter_value.get,
-      confidence: Cf(value: CF_TRUE_VALUE)
-    )
+  discard expert.known_values.has_key_or_put(param_for_instance, @[])
 
-    expert.known_values[param_for_instance].add(param_value_and_cf)
+  let param_value_and_cf: ParameterValueAndConfidence = (
+    value: maybe_parameter_value.get,
+    confidence: Cf(value: CF_TRUE_VALUE)
+  )
 
-  maybe_parameter_value.is_some
+  expert.known_values[param_for_instance].add(param_value_and_cf)
+
+  true
 
 # applying rules, which recursively calls finding out
 
-proc find_out(expert: ExpertSystem, param: Parameter)
+proc find_out(expert: ExpertSystem, param: Parameter, instance: Instance)
 
 proc apply_rules(
   expert: ExpertSystem,
@@ -420,10 +422,12 @@ proc apply_rules(
       for condition in rule.premises:
         let param = expert.find_param_by_name(condition.param_name)
 
-        if param.is_none:
+        let context = expert.find_context_by_name(condition.context_name)
+
+        if param.is_none or context.is_none:
           continue
 
-        expert.find_out(param.get)
+        expert.find_out(param.get, context.get.current_instance.get)
 
         let cf_from_condition = condition.evaluate(knowledge)
 
@@ -468,9 +472,9 @@ proc apply_rules(
 proc find_out(
   expert: ExpertSystem,
   param: Parameter,
+  instance: Instance
 ) =
 
-  let instance = expert.current_instance
   let param_instance: ParameterForInstance = (param.name, instance)
 
   # skip if already known
@@ -523,7 +527,7 @@ proc execute(
       if param.is_none:
         continue
 
-      expert.find_out(param.get)
+      expert.find_out(param.get, context.current_instance.get)
 
     expert.current_state = GOAL
 
@@ -533,7 +537,7 @@ proc execute(
       if param.is_none:
         continue
 
-      expert.find_out(param.get)
+      expert.find_out(param.get, context.current_instance.get)
 
     if context.goals.len == 0 or context.current_instance.is_none:
       continue
