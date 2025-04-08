@@ -345,6 +345,25 @@ proc find_context_by_name(expert: ExpertSystem, context_name: string): Option[Co
     if context.name == context_name:
       result = some(context)
 
+proc fetch_knowledge_from_condition(
+  expert: ExpertSystem,
+  cond: Cond
+): seq[ParameterValueAndConfidence] =
+
+  let param = expert.find_param_by_name(cond.param_name)
+
+  let context = expert.find_context_by_name(cond.context_name)
+
+  if param.is_none or context.is_none:
+    return
+
+  let param_instance: ParameterForInstance = (param.get.name, context.get.current_instance.get)
+
+  if not (param_instance in expert.known_values):
+    return
+
+  expert.known_values[param_instance]
+
 proc init_context(expert: ExpertSystem, context_name: string): Context =
   let maybe_context = expert.find_context_by_name(context_name)
 
@@ -402,14 +421,14 @@ proc apply_rules(
 
   let rules = expert.rules.filter(rule => rule.conclusions.filter(cond => cond.param_name == param.name).len > 0)
 
-  let knowledge = expert.known_values[param_for_instance]
-
   # reject first
 
   for rule in rules:
     var curr_cf: Cf = Cf(value: 0.0)
 
     for condition in rule.premises:
+      let knowledge = expert.fetch_knowledge_from_condition(condition)
+
       let cf_from_condition = condition.evaluate(knowledge)
 
       if cf_from_condition.is_false:
@@ -424,10 +443,14 @@ proc apply_rules(
 
         let context = expert.find_context_by_name(condition.context_name)
 
+        var knowledge = expert.fetch_knowledge_from_condition(condition)
+
         if param.is_none or context.is_none:
           continue
 
         expert.find_out(param.get, context.get.current_instance.get)
+
+        knowledge = expert.fetch_knowledge_from_condition(condition)
 
         let cf_from_condition = condition.evaluate(knowledge)
 
@@ -444,6 +467,8 @@ proc apply_rules(
 
     for conclusion in rule.conclusions:
 
+      let knowledge = expert.fetch_knowledge_from_condition(conclusion)
+
       # insert entry if not exists
 
       var
@@ -456,6 +481,7 @@ proc apply_rules(
         if value_and_cf.value == conclusion.value:
           maybe_entry = value_and_cf.some
           break
+
 
       let entry: ParameterValueAndConfidence = if maybe_entry.is_none:
         let new_entry: ParameterValueAndConfidence = (conclusion.value, Cf(value: CF_UNKNOWN_VALUE))
