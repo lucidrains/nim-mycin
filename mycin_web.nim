@@ -213,6 +213,23 @@ expert.add_rule(Rule(
 
 proc create_dom(): VNode =
   result = buildHtml(tdiv):
-    text "Expert system"
+    tdiv:
+      text "Contexts"
+      ul:
+        for context in expert.contexts:
+          li:
+            text context.name
+    tdiv:
+      text "Parameters"
+      ul:
+        for param in expert.parameters:
+          li:
+            text param.name
+    tdiv:
+      text "Rules"
+      ul:
+        for rule in expert.rules:
+          li:
+            text $rule.num
 
 set_renderer createDom

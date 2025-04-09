@@ -309,15 +309,15 @@ type
     Uninitialized, Initial, Goal
 
   ExpertSystem* = ref object
-    contexts: seq[Context] = @[]
-    parameters: seq[Parameter] = @[]
-    rules: seq[Rule] = @[]
-    current_rule: Option[Rule] = none(Rule)
-    current_state: State = Uninitialized
-    current_instance: Instance
-    knowns: HashSet[ParameterForInstance]
-    asked: HashSet[ParameterForInstance]
-    known_values: Table[ParameterForInstance, seq[ParameterValueAndConfidence]]
+    contexts*: seq[Context] = @[]
+    parameters*: seq[Parameter] = @[]
+    rules*: seq[Rule] = @[]
+    current_rule*: Option[Rule] = none(Rule)
+    current_state*: State = Uninitialized
+    current_instance*: Instance
+    knowns*: HashSet[ParameterForInstance]
+    asked*: HashSet[ParameterForInstance]
+    known_values*: Table[ParameterForInstance, seq[ParameterValueAndConfidence]]
 
 proc clear(expert: ExpertSystem) =
   expert.contexts.set_len(0)
