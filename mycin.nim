@@ -71,25 +71,25 @@ proc `$`(cf: Cf): string =
 # parameters
 
 type
-  ParameterType = enum
+  ParameterType* = enum
     String, Float, Integer, Boolean
 
-  ParameterValue = object
-    case kind: ParameterType
+  ParameterValue* = object
+    case kind*: ParameterType
     of String:
-      string_value: string
+      string_value*: string
     of Float:
-      float_value: float
+      float_value*: float
     of Integer:
-      integer_value: int
+      integer_value*: int
     of Boolean:
-      boolean_value: bool
+      boolean_value*: bool
 
   ParameterValueAndConfidence = tuple
     value: ParameterValue
     confidence: Cf
 
-proc `==`(a, b: ParameterValue): bool =
+proc `==`*(a, b: ParameterValue): bool =
   if a.kind != b.kind:
     return false
 
@@ -125,17 +125,17 @@ proc `$`(value: ParameterValue): string =
 type
   ParameterName = string
 
-  Parameter = object
-    name: ParameterName
-    context_name: string
-    ask_first: bool
-    case kind: ParameterType
+  Parameter* = object
+    name*: ParameterName
+    context_name*: string
+    ask_first*: bool
+    case kind*: ParameterType
     of String:
-      string_valid: Option[seq[string]]
+      string_valid*: Option[seq[string]]
     of Float:
-      float_valid: Option[seq[float]]
+      float_valid*: Option[seq[float]]
     of Integer:
-      integer_valid: Option[seq[int]]
+      integer_valid*: Option[seq[int]]
     of Boolean:
       discard
 
@@ -206,7 +206,8 @@ proc ask(parameter: Parameter, question: Option[string]): Option[ParameterValue]
   if question.is_some:
     echo question.get
 
-  parameter.from_string(read_line(stdin))
+  when not defined(js):
+    parameter.from_string(read_line(stdin))
 
 # context
 
@@ -219,11 +220,11 @@ type
     param_name: ParameterName
     instance: Instance
 
-  Context = ref object
-    name: string
+  Context* = ref object
+    name*: string
     count: int = 0
-    initial_data: seq[string] = @[]
-    goals: seq[string] = @[]
+    initial_data*: seq[string] = @[]
+    goals*: seq[string] = @[]
     current_instance: Option[Instance] = none(Instance)
 
 proc init(c: Context): Instance =
@@ -266,15 +267,15 @@ proc report_findings(findings_table: Findings) =
 # condition
 
 type
-  CondMatchOp = (a: ParameterValue, b: ParameterValue) -> bool
+  CondMatchOp* = (a: ParameterValue, b: ParameterValue) -> bool
 
-  Condition = object
-    param_name: string
-    context_name: string
-    operation: CondMatchOp
-    value: ParameterValue
+  Condition* = object
+    param_name*: string
+    context_name*: string
+    operation*: CondMatchOp
+    value*: ParameterValue
 
-  Cond = Condition
+  Cond* = Condition
 
 proc evaluate(
   condition: Condition,
@@ -295,11 +296,11 @@ proc evaluate(
 # rules
 
 type
-  Rule = object
-    num: int
-    premises: seq[Cond]
-    conclusions: seq[Cond]
-    cf: float = 1.0
+  Rule* = object
+    num*: int
+    premises*: seq[Cond]
+    conclusions*: seq[Cond]
+    cf*: float = 1.0
 
 # expert system
 
@@ -307,7 +308,7 @@ type
   State = enum
     Uninitialized, Initial, Goal
 
-  ExpertSystem = ref object
+  ExpertSystem* = ref object
     contexts: seq[Context] = @[]
     parameters: seq[Parameter] = @[]
     rules: seq[Rule] = @[]
@@ -326,13 +327,13 @@ proc clear(expert: ExpertSystem) =
   expert.knowns.clear()
   expert.known_values.clear()
 
-proc add_context(expert: ExpertSystem, c: Context) =
+proc add_context*(expert: ExpertSystem, c: Context) =
   expert.contexts.add(c)
 
-proc add_param(expert: ExpertSystem, p: Parameter) =
+proc add_param*(expert: ExpertSystem, p: Parameter) =
   expert.parameters.add(p)
 
-proc add_rule(expert: ExpertSystem, r: Rule) =
+proc add_rule*(expert: ExpertSystem, r: Rule) =
   expert.rules.add(r)
 
 proc find_param_by_name(expert: ExpertSystem, param_name: string): Option[Parameter] =
