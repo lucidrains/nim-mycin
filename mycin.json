@@ -1,0 +1,15 @@
+{
+  "rules": [
+    {
+      "num": 71,
+      "premises": [
+        ["gram", "organism", "==", "pos"],
+        ["morphology", "organism", "==", "coccus"],
+        ["growth-conformation", "organism", "==", "clumps"]
+      ],
+      "conclusions": [
+        ["identity", "organism", "==", "staphylococcus"]
+      ]
+    }
+  ]
+}

@@ -5,7 +5,8 @@ import std/[
   sugar,
   sequtils,
   strutils,
-  sets
+  sets,
+  json
 ]
 
 # helper functions
@@ -801,4 +802,8 @@ proc main() =
 # execute main
 
 when is_main_module:
+
+  let expert_json_string = read_file("./mycin.json")
+  let expert_json = parse_json(expert_json_string)
+
   main()
