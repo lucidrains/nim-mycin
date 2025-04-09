@@ -482,7 +482,6 @@ proc apply_rules(
           maybe_entry = value_and_cf.some
           break
 
-
       let entry: ParameterValueAndConfidence = if maybe_entry.is_none:
         let new_entry: ParameterValueAndConfidence = (conclusion.value, Cf(value: CF_UNKNOWN_VALUE))
         expert.known_values[param_for_instance].add(new_entry)
@@ -491,6 +490,7 @@ proc apply_rules(
         maybe_entry.get
 
       cf = entry.confidence
+
       cf.value = (cf or update_cf).value
 
     result = true
@@ -510,8 +510,6 @@ proc find_out(
 
   # ask or apply rules
 
-  var maybe_value: Option[ParameterValue]
-
   var success: bool
 
   if param.ask_first:
@@ -521,15 +519,10 @@ proc find_out(
 
   # store knowledge from asking the user or applying the rule
 
-  if maybe_value.is_none:
+  if not success:
     return
 
   expert.knowns.incl(param_instance)
-
-  let known_value: ParameterValueAndConfidence = (maybe_value.get, Cf(value: 1.0))
-
-  var param_known_values = expert.known_values.get_or_default(param_instance, @[])
-  param_known_values.add(known_value)
 
 proc execute(
   expert: ExpertSystem,
@@ -677,11 +670,18 @@ proc main() =
     context_name: "organism",
     ask_first: true,
     kind: String,
-    string_valid: @["rod", "coccus"].some
+    string_valid: @["acid-fast", "pos", "neg"].some
   ))
 
   expert.add_param(Parameter(
     name: "morphology",
+    context_name: "organism",
+    kind: String,
+    string_valid: @["rod", "coccus"].some
+  ))
+
+  expert.add_param(Parameter(
+    name: "aerobicity",
     context_name: "organism",
     kind: String,
     string_valid: @["aerobic", "anaerobic"].some
