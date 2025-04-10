@@ -9,7 +9,8 @@
       ],
       "conclusions": [
         ["identity", "organism", "==", "staphylococcus"]
-      ]
+      ],
+      "cf": 0.7
     }
   ]
 }

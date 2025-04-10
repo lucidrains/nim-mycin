@@ -1,4 +1,4 @@
-import std/[
+import std/ [
   tables,
   strformat,
   options,
@@ -474,7 +474,6 @@ proc apply_rules(
       # insert entry if not exists
 
       var
-        parameter_value: ParameterValue
         cf: ConfidenceFactor
 
       var maybe_entry: Option[ParameterValueAndConfidence]
@@ -698,34 +697,37 @@ proc main() =
 
   # add rules
 
-  proc str_cond(param: string, context: string, operation: CondMatchOp,
-      value: string): Cond =
-    Cond(
-      param_name: param,
-      context_name: context,
-      operation: operation,
-      value: ParameterValue(kind: String, string_value: value)
-    )
+  proc cond[T](param: string, context: string, operation: CondMatchOp,
+      value: T): Cond =
 
-  proc bool_cond(param: string, context: string, operation: CondMatchOp,
-      value: bool): Cond =
+    let param_value = when (T is string):
+      ParameterValue(kind: String, string_value: value)
+    elif (T is bool):
+      ParameterValue(kind: Boolean, boolean_value: value)
+    elif (T is float):
+      ParameterValue(kind: Float, float_value: value)
+    elif (T is int):
+      ParameterValue(kind: Integer, int_value: value)
+    else:
+      return
+
     Cond(
       param_name: param,
       context_name: context,
       operation: operation,
-      value: ParameterValue(kind: Boolean, boolean_value: value)
+      value: param_value
     )
 
   expert.add_rule(Rule(
     num: 52,
     premises: @[
-      str_cond("site", "culture", `==`, "blood"),
-      str_cond("gram", "organism", `==`, "neg"),
-      str_cond("morphology", "organism", `==`, "rod"),
-      str_cond("aerobicity", "organism", `==`, "anaerobic"),
+      cond("site", "culture", `==`, "blood"),
+      cond("gram", "organism", `==`, "neg"),
+      cond("morphology", "organism", `==`, "rod"),
+      cond("aerobicity", "organism", `==`, "anaerobic"),
     ],
     conclusions: @[
-      str_cond("identity", "organism", `==`, "bacteroides")
+      cond("identity", "organism", `==`, "bacteroides")
     ],
     cf: 0.4
   ))
@@ -733,12 +735,12 @@ proc main() =
   expert.add_rule(Rule(
     num: 71,
     premises: @[
-      str_cond("gram", "organism", `==`, "pos"),
-      str_cond("morphology", "organism", `==`, "coccus"),
-      str_cond("growth-conformation", "organism", `==`, "clumps"),
+      cond("gram", "organism", `==`, "pos"),
+      cond("morphology", "organism", `==`, "coccus"),
+      cond("growth-conformation", "organism", `==`, "clumps"),
     ],
     conclusions: @[
-      str_cond("identity", "organism", `==`, "staphylococcus")
+      cond("identity", "organism", `==`, "staphylococcus")
     ],
     cf: 0.7
   ))
@@ -746,13 +748,13 @@ proc main() =
   expert.add_rule(Rule(
     num: 73,
     premises: @[
-      str_cond("site", "culture", `==`, "blood"),
-      str_cond("gram", "organism", `==`, "neg"),
-      str_cond("morphology", "organism", `==`, "rod"),
-      str_cond("aerobicity", "organism", `==`, "anaerobic")
+      cond("site", "culture", `==`, "blood"),
+      cond("gram", "organism", `==`, "neg"),
+      cond("morphology", "organism", `==`, "rod"),
+      cond("aerobicity", "organism", `==`, "anaerobic")
     ],
     conclusions: @[
-      str_cond("identity", "organism", `==`, "bacteroides")
+      cond("identity", "organism", `==`, "bacteroides")
     ],
     cf: 0.9
   ))
@@ -760,12 +762,12 @@ proc main() =
   expert.add_rule(Rule(
     num: 73,
     premises: @[
-      str_cond("gram", "organism", `==`, "neg"),
-      str_cond("morphology", "organism", `==`, "rod"),
-      bool_cond("compromised-host", "patient", `==`, true)
+      cond("gram", "organism", `==`, "neg"),
+      cond("morphology", "organism", `==`, "rod"),
+      cond("compromised-host", "patient", `==`, true)
     ],
     conclusions: @[
-      str_cond("identity", "organism", `==`, "pseudomonas")
+      cond("identity", "organism", `==`, "pseudomonas")
     ],
     cf: 0.6
   ))
@@ -773,12 +775,12 @@ proc main() =
   expert.add_rule(Rule(
     num: 107,
     premises: @[
-      str_cond("gram", "organism", `==`, "neg"),
-      str_cond("morphology", "organism", `==`, "rod"),
-      str_cond("aerobicity", "organism", `==`, "aerobic")
+      cond("gram", "organism", `==`, "neg"),
+      cond("morphology", "organism", `==`, "rod"),
+      cond("aerobicity", "organism", `==`, "aerobic")
     ],
     conclusions: @[
-      str_cond("identity", "organism", `==`, "enterobacteriaceae")
+      cond("identity", "organism", `==`, "enterobacteriaceae")
     ],
     cf: 0.8
   ))
@@ -786,12 +788,12 @@ proc main() =
   expert.add_rule(Rule(
     num: 165,
     premises: @[
-      str_cond("gram", "organism", `==`, "pos"),
-      str_cond("morphology", "organism", `==`, "coccus"),
-      str_cond("growth-conformation", "organism", `==`, "chain")
+      cond("gram", "organism", `==`, "pos"),
+      cond("morphology", "organism", `==`, "coccus"),
+      cond("growth-conformation", "organism", `==`, "chain")
     ],
     conclusions: @[
-      str_cond("identity", "organism", `==`, "streptococcus")
+      cond("identity", "organism", `==`, "streptococcus")
     ],
     cf: 0.7
   ))
@@ -801,9 +803,19 @@ proc main() =
 
 # execute main
 
-when is_main_module:
+type
+  RuleJson* = object
+    num: int
+    premises: seq[array[4, string]]
+    conclusions: seq[array[4, string]]
+    cf: float
 
+  RulesJson* = object
+    rules: seq[RuleJson]
+
+when is_main_module:
   let expert_json_string = read_file("./mycin.json")
   let expert_json = parse_json(expert_json_string)
+  let rule_json = expert_json.to(RulesJson)
 
   main()
