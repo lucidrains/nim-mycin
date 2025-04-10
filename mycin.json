@@ -55,7 +55,7 @@
       "premises": [
         ["gram", "organism", "==", "neg"],
         ["morphology", "organism", "==", "rod"],
-        ["morphology", "organism", "==", "aerobic"]
+        ["aerobicity", "organism", "==", "aerobic"]
       ],
       "conclusions": [
         ["identity", "organism", "==", "enterobacteriaceae"]

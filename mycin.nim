@@ -621,43 +621,43 @@ type
   RulesJson* = object
     rules*: seq[RuleJson]
 
-proc json_to_rule*(json: RuleJson): Rule =
+proc array_to_seq(expert: ExpertSystem, cond_array: seq[array[4, string]]): seq[Cond] =
 
-  var
-    premises: seq[Cond] = @[]
-    conclusions: seq[Cond] = @[]
-
-  for cond_json in json.premises:
+  for cond_json in cond_array:
     let operation: CondMatchOp = if cond_json[2] == "==":
       `==`
     else:
       always_false
 
-    premises.add(cond(
-      cond_json[0],
-      cond_json[1],
-      operation,
-      cond_json[3]
-    ))
+    let param = expert.find_param_by_name(cond_json[0]).get
 
-  for cond_json in json.conclusions:
-    let operation: CondMatchOp = if cond_json[2] == "==":
-      `==`
+    let param_value = param.from_string(cond_json[3]).get
+
+    let premise: Condition = case param_value.kind:
+    of String:
+      cond(
+        cond_json[0],
+        cond_json[1],
+        operation,
+        param_value.string_value
+      )
     else:
-      always_false
+      cond(
+        cond_json[0],
+        cond_json[1],
+        operation,
+        param_value.boolean_value
+      )
 
-    conclusions.add(cond(
-      cond_json[0],
-      cond_json[1],
-      operation,
-      cond_json[3]
-    ))
+    result.add(premise)
+
+proc json_to_rule*(expert: ExpertSystem, json: RuleJson): Rule =
 
   Rule(
     num: json.num,
     cf: json.cf,
-    premises: premises,
-    conclusions: conclusions
+    premises: expert.array_to_seq(json.premises),
+    conclusions: expert.array_to_seq(json.conclusions)
   )
 
 # main
@@ -703,8 +703,7 @@ proc populate(expert: ExpertSystem) =
   expert.add_param(Parameter(
     name: "compromised-host",
     context_name: "patient",
-    kind: String,
-    string_valid: @["true", "false"].some
+    kind: Boolean
   ))
 
   # culture params
@@ -783,7 +782,7 @@ when is_main_module:
   let rules_json = expert_json.to(RulesJson)
 
   for json in rules_json.rules:
-    let rule = json_to_rule(json)
+    let rule = expert.json_to_rule(json)
     expert.add_rule(rule)
 
   let findings = expert.execute(@["patient", "culture", "organism"])
