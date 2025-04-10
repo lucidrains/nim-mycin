@@ -106,12 +106,17 @@ expert.add_param(Parameter(
   string_valid: @["chains", "pairs", "clumps"].some
 ))
 
-let expert_json_string = read_file("./mycin.json")
+const expert_json_string = static_read("./mycin.json")
+
 let expert_json = parse_json(expert_json_string)
 let rules_json = expert_json.to(RulesJson)
 
+for json in rules_json.contexts:
+  let context = expert.json_to_context(json)
+  expert.add_context(context)
+
 for json in rules_json.rules:
-  let rule = json_to_rule(json)
+  let rule = expert.json_to_rule(json)
   expert.add_rule(rule)
 
 # add rules

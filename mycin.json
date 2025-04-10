@@ -49,7 +49,7 @@
         ["site", "culture", "==", "blood"],
         ["gram", "organism", "==", "neg"],
         ["morphology", "organism", "==", "rod"],
-        ["aerobicity", "organism", "==", "anaerobic"],
+        ["aerobicity", "organism", "==", "anaerobic"]
       ],
       "conclusions": [
         ["identity", "organism", "==", "bacteroides"]
@@ -85,7 +85,7 @@
       "premises": [
         ["gram", "organism", "==", "pos"],
         ["morphology", "organism", "==", "coccus"],
-        ["growth-conformation", "organism", "==", "chains"],
+        ["growth-conformation", "organism", "==", "chains"]
       ],
       "conclusions": [
         ["identity", "organism", "==", "streptococcus"]
