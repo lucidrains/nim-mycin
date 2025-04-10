@@ -1,6 +1,19 @@
 {
   "rules": [
     {
+      "num": 52,
+      "premises": [
+        ["site", "culture", "==", "blood"],
+        ["gram", "organism", "==", "neg"],
+        ["morphology", "organism", "==", "rod"],
+        ["aerobicity", "organism", "==", "anaerobic"]
+      ],
+      "conclusions": [
+        ["identity", "organism", "==", "bacteroides"]
+      ],
+      "cf": 0.4
+    },
+    {
       "num": 71,
       "premises": [
         ["gram", "organism", "==", "pos"],
@@ -9,6 +22,55 @@
       ],
       "conclusions": [
         ["identity", "organism", "==", "staphylococcus"]
+      ],
+      "cf": 0.7
+    },
+    {
+      "num": 73,
+      "premises": [
+        ["site", "culture", "==", "blood"],
+        ["gram", "organism", "==", "neg"],
+        ["morphology", "organism", "==", "rod"],
+        ["aerobicity", "organism", "==", "anaerobic"],
+      ],
+      "conclusions": [
+        ["identity", "organism", "==", "bacteroides"]
+      ],
+      "cf": 0.9
+    },
+    {
+      "num": 75,
+      "premises": [
+        ["gram", "organism", "==", "neg"],
+        ["morphology", "organism", "==", "rod"],
+        ["compromised-host", "patient", "==", "true"]
+      ],
+      "conclusions": [
+        ["identity", "organism", "==", "pseudomonas"]
+      ],
+      "cf": 0.6
+    },
+    {
+      "num": 107,
+      "premises": [
+        ["gram", "organism", "==", "neg"],
+        ["morphology", "organism", "==", "rod"],
+        ["morphology", "organism", "==", "aerobic"]
+      ],
+      "conclusions": [
+        ["identity", "organism", "==", "enterobacteriaceae"]
+      ],
+      "cf": 0.8
+    },
+    {
+      "num": 165,
+      "premises": [
+        ["gram", "organism", "==", "pos"],
+        ["morphology", "organism", "==", "coccus"],
+        ["growth-conformation", "organism", "==", "chains"],
+      ],
+      "conclusions": [
+        ["identity", "organism", "==", "streptococcus"]
       ],
       "cf": 0.7
     }

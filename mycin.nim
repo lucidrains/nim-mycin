@@ -104,6 +104,9 @@ proc `==`*(a, b: ParameterValue): bool =
   of Boolean:
     result = a.boolean_value == b.boolean_value
 
+proc always_false*(a, b: ParameterValue): bool =
+  false
+
 proc `$`[T](option_value: Option[T]): string =
   if option_value.is_some:
     result = $option_value.get
@@ -277,6 +280,27 @@ type
     value*: ParameterValue
 
   Cond* = Condition
+
+proc cond[T](param: string, context: string, operation: CondMatchOp,
+      value: T): Cond =
+
+    let param_value = when (T is string):
+      ParameterValue(kind: String, string_value: value)
+    elif (T is bool):
+      ParameterValue(kind: Boolean, boolean_value: value)
+    elif (T is float):
+      ParameterValue(kind: Float, float_value: value)
+    elif (T is int):
+      ParameterValue(kind: Integer, int_value: value)
+    else:
+      return
+
+    Cond(
+      param_name: param,
+      context_name: context,
+      operation: operation,
+      value: param_value
+    )
 
 proc evaluate(
   condition: Condition,
@@ -585,10 +609,60 @@ proc execute(
 
     result[instance] = seq_findings
 
+# json related
+
+type
+  RuleJson* = object
+    num: int
+    premises: seq[array[4, string]]
+    conclusions: seq[array[4, string]]
+    cf: float
+
+  RulesJson* = object
+    rules*: seq[RuleJson]
+
+proc json_to_rule*(json: RuleJson): Rule =
+
+  var
+    premises: seq[Cond] = @[]
+    conclusions: seq[Cond] = @[]
+
+  for cond_json in json.premises:
+    let operation: CondMatchOp = if cond_json[2] == "==":
+      `==`
+    else:
+      always_false
+
+    premises.add(cond(
+      cond_json[0],
+      cond_json[1],
+      operation,
+      cond_json[3]
+    ))
+
+  for cond_json in json.conclusions:
+    let operation: CondMatchOp = if cond_json[2] == "==":
+      `==`
+    else:
+      always_false
+
+    conclusions.add(cond(
+      cond_json[0],
+      cond_json[1],
+      operation,
+      cond_json[3]
+    ))
+
+  Rule(
+    num: json.num,
+    cf: json.cf,
+    premises: premises,
+    conclusions: conclusions
+  )
+
 # main
 
-proc main() =
-  var expert = ExpertSystem()
+proc populate(expert: ExpertSystem) =
 
   expert.add_context(Context(name: "patient", initial_data: @["name", "sex", "age"]))
   expert.add_context(Context(name: "culture", initial_data: @["site", "days-old"]))
@@ -629,7 +703,8 @@ proc main() =
   expert.add_param(Parameter(
     name: "compromised-host",
     context_name: "patient",
-    kind: Boolean
+    kind: String,
+    string_valid: @["true", "false"].some
   ))
 
   # culture params
@@ -695,127 +770,21 @@ proc main() =
     string_valid: @["chains", "pairs", "clumps"].some
   ))
 
-  # add rules
+# execute main
 
-  proc cond[T](param: string, context: string, operation: CondMatchOp,
-      value: T): Cond =
+when is_main_module:
 
-    let param_value = when (T is string):
-      ParameterValue(kind: String, string_value: value)
-    elif (T is bool):
-      ParameterValue(kind: Boolean, boolean_value: value)
-    elif (T is float):
-      ParameterValue(kind: Float, float_value: value)
-    elif (T is int):
-      ParameterValue(kind: Integer, int_value: value)
-    else:
-      return
+  let expert = ExpertSystem()
 
-    Cond(
-      param_name: param,
-      context_name: context,
-      operation: operation,
-      value: param_value
-    )
+  expert.populate()
 
-  expert.add_rule(Rule(
-    num: 52,
-    premises: @[
-      cond("site", "culture", `==`, "blood"),
-      cond("gram", "organism", `==`, "neg"),
-      cond("morphology", "organism", `==`, "rod"),
-      cond("aerobicity", "organism", `==`, "anaerobic"),
-    ],
-    conclusions: @[
-      cond("identity", "organism", `==`, "bacteroides")
-    ],
-    cf: 0.4
-  ))
+  let expert_json_string = read_file("./mycin.json")
+  let expert_json = parse_json(expert_json_string)
+  let rules_json = expert_json.to(RulesJson)
 
-  expert.add_rule(Rule(
-    num: 71,
-    premises: @[
-      cond("gram", "organism", `==`, "pos"),
-      cond("morphology", "organism", `==`, "coccus"),
-      cond("growth-conformation", "organism", `==`, "clumps"),
-    ],
-    conclusions: @[
-      cond("identity", "organism", `==`, "staphylococcus")
-    ],
-    cf: 0.7
-  ))
-
-  expert.add_rule(Rule(
-    num: 73,
-    premises: @[
-      cond("site", "culture", `==`, "blood"),
-      cond("gram", "organism", `==`, "neg"),
-      cond("morphology", "organism", `==`, "rod"),
-      cond("aerobicity", "organism", `==`, "anaerobic")
-    ],
-    conclusions: @[
-      cond("identity", "organism", `==`, "bacteroides")
-    ],
-    cf: 0.9
-  ))
-
-  expert.add_rule(Rule(
-    num: 73,
-    premises: @[
-      cond("gram", "organism", `==`, "neg"),
-      cond("morphology", "organism", `==`, "rod"),
-      cond("compromised-host", "patient", `==`, true)
-    ],
-    conclusions: @[
-      cond("identity", "organism", `==`, "pseudomonas")
-    ],
-    cf: 0.6
-  ))
-
-  expert.add_rule(Rule(
-    num: 107,
-    premises: @[
-      cond("gram", "organism", `==`, "neg"),
-      cond("morphology", "organism", `==`, "rod"),
-      cond("aerobicity", "organism", `==`, "aerobic")
-    ],
-    conclusions: @[
-      cond("identity", "organism", `==`, "enterobacteriaceae")
-    ],
-    cf: 0.8
-  ))
-
-  expert.add_rule(Rule(
-    num: 165,
-    premises: @[
-      cond("gram", "organism", `==`, "pos"),
-      cond("morphology", "organism", `==`, "coccus"),
-      cond("growth-conformation", "organism", `==`, "chain")
-    ],
-    conclusions: @[
-      cond("identity", "organism", `==`, "streptococcus")
-    ],
-    cf: 0.7
-  ))
+  for json in rules_json.rules:
+    let rule = json_to_rule(json)
+    expert.add_rule(rule)
 
   let findings = expert.execute(@["patient", "culture", "organism"])
   report_findings(findings)
-
-# execute main
-
-type
-  RuleJson* = object
-    num: int
-    premises: seq[array[4, string]]
-    conclusions: seq[array[4, string]]
-    cf: float
-
-  RulesJson* = object
-    rules: seq[RuleJson]
-
-when is_main_module:
-  let expert_json_string = read_file("./mycin.json")
-  let expert_json = parse_json(expert_json_string)
-  let rule_json = expert_json.to(RulesJson)
-
-  main()

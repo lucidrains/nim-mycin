@@ -1,6 +1,6 @@
 include karax/prelude
 
-import std/options
+import std/[json, options]
 import ./mycin
 
 var expert = ExpertSystem()
@@ -110,6 +110,14 @@ expert.add_param(Parameter(
   string_valid: @["chains", "pairs", "clumps"].some
 ))
 
+let expert_json_string = read_file("./mycin.json")
+let expert_json = parse_json(expert_json_string)
+let rules_json = expert_json.to(RulesJson)
+
+for json in rules_json.rules:
+  let rule = json_to_rule(json)
+  expert.add_rule(rule)
+
 # add rules
 
 proc str_cond(param: string, context: string, operation: CondMatchOp,
@@ -129,87 +137,6 @@ proc bool_cond(param: string, context: string, operation: CondMatchOp,
     operation: operation,
     value: ParameterValue(kind: Boolean, boolean_value: value)
   )
-
-expert.add_rule(Rule(
-  num: 52,
-  premises: @[
-    str_cond("site", "culture", `==`, "blood"),
-    str_cond("gram", "organism", `==`, "neg"),
-    str_cond("morphology", "organism", `==`, "rod"),
-    str_cond("aerobicity", "organism", `==`, "anaerobic"),
-  ],
-  conclusions: @[
-    str_cond("identity", "organism", `==`, "bacteroides")
-  ],
-  cf: 0.4
-))
-
-expert.add_rule(Rule(
-  num: 71,
-  premises: @[
-    str_cond("gram", "organism", `==`, "pos"),
-    str_cond("morphology", "organism", `==`, "coccus"),
-    str_cond("growth-conformation", "organism", `==`, "clumps"),
-  ],
-  conclusions: @[
-    str_cond("identity", "organism", `==`, "staphylococcus")
-  ],
-  cf: 0.7
-))
-
-expert.add_rule(Rule(
-  num: 73,
-  premises: @[
-    str_cond("site", "culture", `==`, "blood"),
-    str_cond("gram", "organism", `==`, "neg"),
-    str_cond("morphology", "organism", `==`, "rod"),
-    str_cond("aerobicity", "organism", `==`, "anaerobic")
-  ],
-  conclusions: @[
-    str_cond("identity", "organism", `==`, "bacteroides")
-  ],
-  cf: 0.9
-))
-
-expert.add_rule(Rule(
-  num: 73,
-  premises: @[
-    str_cond("gram", "organism", `==`, "neg"),
-    str_cond("morphology", "organism", `==`, "rod"),
-    bool_cond("compromised-host", "patient", `==`, true)
-  ],
-  conclusions: @[
-    str_cond("identity", "organism", `==`, "pseudomonas")
-  ],
-  cf: 0.6
-))
-
-expert.add_rule(Rule(
-  num: 107,
-  premises: @[
-    str_cond("gram", "organism", `==`, "neg"),
-    str_cond("morphology", "organism", `==`, "rod"),
-    str_cond("aerobicity", "organism", `==`, "aerobic")
-  ],
-  conclusions: @[
-    str_cond("identity", "organism", `==`, "enterobacteriaceae")
-  ],
-  cf: 0.8
-))
-
-expert.add_rule(Rule(
-  num: 165,
-  premises: @[
-    str_cond("gram", "organism", `==`, "pos"),
-    str_cond("morphology", "organism", `==`, "coccus"),
-    str_cond("growth-conformation", "organism", `==`, "chains")
-  ],
-  conclusions: @[
-    str_cond("identity", "organism", `==`, "streptococcus")
-  ],
-  cf: 0.7
-))
-
 
 proc create_dom(): VNode =
   result = buildHtml(tdiv):
