@@ -485,7 +485,7 @@ proc apply_rules(
           break
 
       let entry: ParameterValueAndConfidence = if maybe_entry.is_none:
-        let new_entry: ParameterValueAndConfidence = (conclusion.value, Cf(value: CF_UNKNOWN_VALUE))
+        let new_entry: ParameterValueAndConfidence = (conclusion.value, update_cf)
         expert.known_values[param_for_instance].add(new_entry)
         new_entry
       else:
