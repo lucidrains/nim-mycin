@@ -5,10 +5,6 @@ import ./mycin
 
 var expert = ExpertSystem()
 
-expert.add_context(Context(name: "patient", initial_data: @["name", "sex", "age"]))
-expert.add_context(Context(name: "culture", initial_data: @["site", "days-old"]))
-expert.add_context(Context(name: "organism", goals: @["identity"]))
-
 # patient paramas
 
 expert.add_param(Parameter(

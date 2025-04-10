@@ -38,11 +38,11 @@ type
 
   Cf = ConfidenceFactor
 
-proc `and`(cf1: Cf, cf2: Cf): Cf =
+proc `&`(cf1: Cf, cf2: Cf): Cf =
   let value = min(cf1.value, cf2.value)
   Cf(value: value)
 
-proc `or`(cf1: Cf, cf2: Cf): Cf =
+proc `|=`(cf1: var Cf, cf2: Cf) =
   let a = cf1.value
   let b = cf2.value
 
@@ -55,7 +55,7 @@ proc `or`(cf1: Cf, cf2: Cf): Cf =
   else:
     value = (a + b) / (1 - min(abs(a), abs(b)))
 
-  Cf(value: value)
+  cf1.value = value
 
 proc is_valid(cf: Cf): bool =
   (cf.value <= cf.true_value) and (cf.value >= cf.false_value)
@@ -480,7 +480,7 @@ proc apply_rules(
 
         let cf_from_condition = condition.evaluate(knowledge)
 
-        curr_cf = curr_cf and cf_from_condition
+        curr_cf = curr_cf & cf_from_condition
 
         if not curr_cf.is_true:
           curr_cf = Cf(value: CF_FALSE_VALUE)
@@ -516,7 +516,7 @@ proc apply_rules(
 
       cf = entry.confidence
 
-      cf.value = (cf or update_cf).value
+      cf |= update_cf
 
     result = true
 
@@ -612,6 +612,11 @@ proc execute(
 # json related
 
 type
+  ContextJson* = object
+    name*: string
+    initial_data: seq[string]
+    goals: seq[string]
+
   RuleJson* = object
     num: int
     premises: seq[array[4, string]]
@@ -619,6 +624,7 @@ type
     cf: float
 
   RulesJson* = object
+    contexts*: seq[ContextJson]
     rules*: seq[RuleJson]
 
 proc array_to_seq(expert: ExpertSystem, cond_array: seq[array[4, string]]): seq[Cond] =
@@ -651,7 +657,21 @@ proc array_to_seq(expert: ExpertSystem, cond_array: seq[array[4, string]]): seq[
 
     result.add(premise)
 
-proc json_to_rule*(expert: ExpertSystem, json: RuleJson): Rule =
+proc json_to_context*(
+  expert: ExpertSystem,
+  json: ContextJson
+): Context =
+
+  Context(
+    name: json.name,
+    initial_data: json.initial_data,
+    goals: json.goals
+  )
+
+proc json_to_rule*(
+  expert: ExpertSystem,
+  json: RuleJson
+): Rule =
 
   Rule(
     num: json.num,
@@ -663,10 +683,6 @@ proc json_to_rule*(expert: ExpertSystem, json: RuleJson): Rule =
 # main
 
 proc populate(expert: ExpertSystem) =
-
-  expert.add_context(Context(name: "patient", initial_data: @["name", "sex", "age"]))
-  expert.add_context(Context(name: "culture", initial_data: @["site", "days-old"]))
-  expert.add_context(Context(name: "organism", goals: @["identity"]))
 
   # patient paramas
 
@@ -780,6 +796,10 @@ when is_main_module:
   let expert_json_string = read_file("./mycin.json")
   let expert_json = parse_json(expert_json_string)
   let rules_json = expert_json.to(RulesJson)
+
+  for json in rules_json.contexts:
+    let context = expert.json_to_context(json)
+    expert.add_context(context)
 
   for json in rules_json.rules:
     let rule = expert.json_to_rule(json)

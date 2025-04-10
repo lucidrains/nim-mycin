@@ -1,4 +1,22 @@
 {
+
+  "contexts": [
+    {
+      "name": "patient",
+      "initial_data": ["name", "sex", "age"],
+      "goals": []
+    },
+    {
+      "name": "culture",
+      "initial_data": ["site", "days-old"],
+      "goals": []
+    },
+    {
+      "name": "organism",
+      "initial_data": [],
+      "goals": ["identity"]
+    }
+  ],
   "rules": [
     {
       "num": 52,
