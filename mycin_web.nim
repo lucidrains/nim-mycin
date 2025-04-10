@@ -202,7 +202,7 @@ expert.add_rule(Rule(
   premises: @[
     str_cond("gram", "organism", `==`, "pos"),
     str_cond("morphology", "organism", `==`, "coccus"),
-    str_cond("growth-conformation", "organism", `==`, "chain")
+    str_cond("growth-conformation", "organism", `==`, "chains")
   ],
   conclusions: @[
     str_cond("identity", "organism", `==`, "streptococcus")
