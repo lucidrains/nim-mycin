@@ -212,7 +212,30 @@ proc ask(parameter: Parameter, question: Option[string]): Option[ParameterValue]
     echo question.get
 
   when not defined(js):
-    parameter.from_string(read_line(stdin))
+
+    var line: string
+
+    while true:
+      line = read_line(stdin)
+
+      case line:
+      of "?":
+
+        let choices = case parameter.kind:
+        of String:
+          parameter.string_valid.get
+        of Integer:
+          parameter.integer_valid.get.map_it($it)
+        of Float:
+          parameter.float_valid.get.map_it($it)
+        else:
+          @["true", "false"]
+
+        let choices_str = choices.join(", ")
+
+        echo &"""valid choices are: ( {choices_str} )"""
+      else:
+        return parameter.from_string(line)
 
 # context
 
