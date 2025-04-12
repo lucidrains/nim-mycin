@@ -17,6 +17,22 @@
       "goals": ["identity"]
     }
   ],
+  "parameters": [
+    {
+      "name": "name",
+      "context_name": "patient",
+      "ask_first": true,
+      "kind": "String",
+      "valid": [],
+    },
+    {
+      "name": "sex",
+      "context_name": "patient",
+      "ask_first": true,
+      "kind": "String",
+      "valid": ["M", "F"]
+    },
+  ],
   "rules": [
     {
       "num": 52,

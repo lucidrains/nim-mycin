@@ -8,21 +8,6 @@ var expert = ExpertSystem()
 # patient paramas
 
 expert.add_param(Parameter(
-  name: "name",
-  context_name: "patient",
-  ask_first: true,
-  kind: String
-))
-
-expert.add_param(Parameter(
-  name: "sex",
-  context_name: "patient",
-  ask_first: true,
-  kind: String,
-  string_valid: some(@["M", "F"])
-))
-
-expert.add_param(Parameter(
   name: "age",
   context_name: "patient",
   ask_first: true,
@@ -111,33 +96,9 @@ const expert_json_string = static_read("./mycin.json")
 let expert_json = parse_json(expert_json_string)
 let rules_json = expert_json.to(RulesJson)
 
-for json in rules_json.contexts:
-  let context = expert.json_to_context(json)
-  expert.add_context(context)
-
-for json in rules_json.rules:
-  let rule = expert.json_to_rule(json)
-  expert.add_rule(rule)
+expert.populate_from_json(rules_json)
 
 # add rules
-
-proc str_cond(param: string, context: string, operation: CondMatchOp,
-    value: string): Cond =
-  Cond(
-    param_name: param,
-    context_name: context,
-    operation: operation,
-    value: ParameterValue(kind: String, string_value: value)
-  )
-
-proc bool_cond(param: string, context: string, operation: CondMatchOp,
-    value: bool): Cond =
-  Cond(
-    param_name: param,
-    context_name: context,
-    operation: operation,
-    value: ParameterValue(kind: Boolean, boolean_value: value)
-  )
 
 proc create_dom(): VNode =
   result = buildHtml(tdiv):

@@ -617,6 +617,13 @@ type
     initial_data: seq[string]
     goals: seq[string]
 
+  ParameterJson* = object
+    name*: string
+    context_name: string
+    ask_first: bool
+    kind: string
+    valid: seq[string]
+
   RuleJson* = object
     num: int
     premises: seq[array[4, string]]
@@ -625,6 +632,7 @@ type
 
   RulesJson* = object
     contexts*: seq[ContextJson]
+    parameters*: seq[ParameterJson]
     rules*: seq[RuleJson]
 
 proc array_to_seq(expert: ExpertSystem, cond_array: seq[array[4, string]]): seq[Cond] =
@@ -668,6 +676,46 @@ proc json_to_context*(
     goals: json.goals
   )
 
+proc json_to_parameter*(
+  expert: ExpertSystem,
+  json: ParameterJson
+): Parameter =
+
+  let kind: ParameterType = parse_enum[ParameterType](json.kind)
+
+  case kind:
+  of String:
+    Parameter(
+      name: json.name,
+      context_name: json.context_name,
+      ask_first: json.ask_first,
+      kind: String,
+      string_valid: json.valid.some
+    )
+  of Float:
+    Parameter(
+      name: json.name,
+      context_name: json.context_name,
+      ask_first: json.ask_first,
+      kind: Float,
+      float_valid: json.valid.map_it(parse_float(it)).some
+    )
+  of Integer:
+    Parameter(
+      name: json.name,
+      context_name: json.context_name,
+      ask_first: json.ask_first,
+      kind: Integer,
+      integer_valid: json.valid.map_it(parse_int(it)).some
+    )
+  else:
+    Parameter(
+      name: json.name,
+      context_name: json.context_name,
+      ask_first: json.ask_first,
+      kind: Boolean
+    )
+
 proc json_to_rule*(
   expert: ExpertSystem,
   json: RuleJson
@@ -682,24 +730,22 @@ proc json_to_rule*(
 
 # main
 
+proc populate_from_json*(expert: ExpertSystem, rules_json: RulesJson) =
+  for json in rules_json.contexts:
+    let context = expert.json_to_context(json)
+    expert.add_context(context)
+
+  for json in rules_json.parameters:
+    let parameter = expert.json_to_parameter(json)
+    expert.add_param(parameter)
+
+  for json in rules_json.rules:
+    let rule = expert.json_to_rule(json)
+    expert.add_rule(rule)
+
 proc populate(expert: ExpertSystem) =
 
   # patient paramas
-
-  expert.add_param(Parameter(
-    name: "name",
-    context_name: "patient",
-    ask_first: true,
-    kind: String
-  ))
-
-  expert.add_param(Parameter(
-    name: "sex",
-    context_name: "patient",
-    ask_first: true,
-    kind: String,
-    string_valid: some(@["M", "F"])
-  ))
 
   expert.add_param(Parameter(
     name: "age",
@@ -797,13 +843,7 @@ when is_main_module:
   let expert_json = parse_json(expert_json_string)
   let rules_json = expert_json.to(RulesJson)
 
-  for json in rules_json.contexts:
-    let context = expert.json_to_context(json)
-    expert.add_context(context)
-
-  for json in rules_json.rules:
-    let rule = expert.json_to_rule(json)
-    expert.add_rule(rule)
+  expert.populate_from_json(rules_json)
 
   let findings = expert.execute(@["patient", "culture", "organism"])
   report_findings(findings)
