@@ -1,4 +1,5 @@
-import std/ [
+import std / [
+  os,
   tables,
   strformat,
   options,
@@ -747,9 +748,16 @@ proc populate_from_json*(expert: ExpertSystem, rules_json: RulesJson) =
 
 when is_main_module:
 
+  let args = command_line_params()
+
+  let json_file_path = if args.len == 0:
+    "./mycin.json"
+  else:
+    &"{args[0]}.json"
+
   let expert = ExpertSystem()
 
-  let expert_json_string = read_file("./mycin-from-llm.json")
+  let expert_json_string = read_file(json_file_path)
   let expert_json = parse_json(expert_json_string)
   let rules_json = expert_json.to(RulesJson)
 
