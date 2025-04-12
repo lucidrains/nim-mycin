@@ -749,7 +749,7 @@ when is_main_module:
 
   let expert = ExpertSystem()
 
-  let expert_json_string = read_file("./mycin.json")
+  let expert_json_string = read_file("./mycin-from-llm.json")
   let expert_json = parse_json(expert_json_string)
   let rules_json = expert_json.to(RulesJson)
 
