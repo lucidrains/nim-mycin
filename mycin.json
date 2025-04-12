@@ -23,7 +23,7 @@
       "context_name": "patient",
       "ask_first": true,
       "kind": "String",
-      "valid": [],
+      "valid": []
     },
     {
       "name": "sex",
@@ -45,6 +45,62 @@
       "ask_first": false,
       "kind": "Boolean",
       "valid": []
+    },
+    {
+      "name": "site",
+      "context_name": "culture",
+      "ask_first": true,
+      "kind": "String",
+      "valid": ["blood"]
+    },
+    {
+      "name": "days-old",
+      "context_name": "culture",
+      "ask_first": true,
+      "kind": "Integer",
+      "valid": []
+    },
+    {
+      "name": "identity",
+      "context_name": "organism",
+      "ask_first": true,
+      "kind": "String",
+      "valid": [
+        "pseudomonas",
+        "klebsiella",
+        "enterobacteriaceae",
+        "staphylococcus",
+        "bacteroides",
+        "streptococcus"
+      ]
+    },
+    {
+      "name": "gram",
+      "context_name": "organism",
+      "ask_first": true,
+      "kind": "String",
+      "valid": ["acid-fast", "pos", "neg"]
+    },
+    {
+      "name": "morphology",
+      "context_name": "organism",
+      "ask_first": false,
+      "kind": "String",
+      "valid": ["rod", "coccus"]
+    },
+    {
+      "name": "aerobicity",
+      "context_name": "organism",
+      "ask_first": false,
+      "kind": "String",
+      "valid": ["aerobic", "anaerobic"]
+    },
+    {
+      "name": "growth-conformation",
+      "context_name": "organism",
+      "ask_first": false,
+      "kind": "String",
+      "valid": ["chains", "pairs", "clumps"]
     }
   ],
   "rules": [

@@ -5,69 +5,6 @@ import ./mycin
 
 var expert = ExpertSystem()
 
-# culture params
-
-expert.add_param(Parameter(
-  name: "site",
-  context_name: "culture",
-  ask_first: true,
-  kind: String,
-  string_valid: @["blood"].some
-))
-
-expert.add_param(Parameter(
-  name: "days-old",
-  context_name: "culture",
-  ask_first: true,
-  kind: Integer
-))
-
-# organism
-
-expert.add_param(Parameter(
-  name: "identity",
-  context_name: "organism",
-  ask_first: true,
-  kind: String,
-  string_valid: @[
-    "pseudomonas",
-    "klebsiella",
-    "enterobacteriaceae",
-    "staphylococcus",
-    "bacteroides",
-    "streptococcus"
-  ].some
-))
-
-expert.add_param(Parameter(
-  name: "gram",
-  context_name: "organism",
-  ask_first: true,
-  kind: String,
-  string_valid: @["acid-fast", "pos", "neg"].some
-))
-
-expert.add_param(Parameter(
-  name: "morphology",
-  context_name: "organism",
-  kind: String,
-  string_valid: @["rod", "coccus"].some
-))
-
-expert.add_param(Parameter(
-  name: "aerobicity",
-  context_name: "organism",
-  kind: String,
-  string_valid: @["aerobic", "anaerobic"].some
-))
-
-expert.add_param(Parameter(
-  name: "growth-conformation",
-  context_name: "organism",
-  kind: String,
-  string_valid: @["chains", "pairs", "clumps"].some
-))
-
 const expert_json_string = static_read("./mycin.json")
 
 let expert_json = parse_json(expert_json_string)
