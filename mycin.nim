@@ -745,29 +745,6 @@ proc populate_from_json*(expert: ExpertSystem, rules_json: RulesJson) =
 
 proc populate(expert: ExpertSystem) =
 
-  # patient paramas
-
-  expert.add_param(Parameter(
-    name: "age",
-    context_name: "patient",
-    ask_first: true,
-    kind: Integer
-  ))
-
-  expert.add_param(Parameter(
-    name: "burn",
-    context_name: "patient",
-    ask_first: true,
-    kind: String,
-    string_valid: @["no", "mild", "serious"].some
-  ))
-
-  expert.add_param(Parameter(
-    name: "compromised-host",
-    context_name: "patient",
-    kind: Boolean
-  ))
-
   # culture params
 
   expert.add_param(Parameter(

@@ -32,6 +32,20 @@
       "kind": "String",
       "valid": ["M", "F"]
     },
+    {
+      "name": "age",
+      "context_name": "patient",
+      "ask_first": true,
+      "kind": "Integer",
+      "valid": []
+    },
+    {
+      "name": "compromised-host",
+      "context_name": "patient",
+      "ask_first": false,
+      "kind": "Boolean",
+      "valid": []
+    }
   ],
   "rules": [
     {
