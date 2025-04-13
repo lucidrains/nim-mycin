@@ -198,7 +198,7 @@ proc from_string(
 
     if (
       float_value.is_some and
-      (valid.is_none or not valid.get.contains(float_value.get))
+      (valid.is_none or valid.get.contains(float_value.get))
     ):
       result = ParameterValue(kind: Float, float_value: float_value.get).some
 
@@ -315,9 +315,9 @@ proc cond[T](param: string, context: string, operation: CondMatchOp,
     elif (T is float):
       ParameterValue(kind: Float, float_value: value)
     elif (T is int):
-      ParameterValue(kind: Integer, int_value: value)
+      ParameterValue(kind: Integer, integer_value: value)
     else:
-      return
+      raise newException(TypeError, &"Unsupported type for condition value: {T.name}")
 
     Cond(
       param_name: param,
