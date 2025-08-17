@@ -71,7 +71,8 @@
         "enterobacteriaceae",
         "staphylococcus",
         "bacteroides",
-        "streptococcus"
+        "streptococcus",
+        "neisseria-meningitidis"
       ]
     },
     {
@@ -177,6 +178,42 @@
         ["identity", "organism", "==", "streptococcus"]
       ],
       "cf": 0.7
+    },
+    {
+      "num": 200,
+      "premises": [
+        ["site", "culture", "==", "blood"],
+        ["gram", "organism", "==", "neg"],
+        ["morphology", "organism", "==", "coccus"]
+      ],
+      "conclusions": [
+        ["identity", "organism", "==", "neisseria-meningitidis"]
+      ],
+      "cf": 0.8
+    },
+    {
+      "num": 201,
+      "premises": [
+        ["gram", "organism", "==", "neg"],
+        ["morphology", "organism", "==", "coccus"],
+        ["growth-conformation", "organism", "==", "pairs"]
+      ],
+      "conclusions": [
+        ["identity", "organism", "==", "neisseria-meningitidis"]
+      ],
+      "cf": 0.7
+    },
+    {
+      "num": 202,
+      "premises": [
+        ["age", "patient", "==", "2"],
+        ["gram", "organism", "==", "neg"],
+        ["morphology", "organism", "==", "coccus"]
+      ],
+      "conclusions": [
+        ["identity", "organism", "==", "neisseria-meningitidis"]
+      ],
+      "cf": 0.6
     }
   ]
 }
