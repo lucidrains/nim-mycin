@@ -1,0 +1,9 @@
+John Doe
+M
+25
+blood
+2
+csf
+neg
+coccus
+pairs

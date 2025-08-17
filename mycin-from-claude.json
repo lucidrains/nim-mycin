@@ -1,0 +1,243 @@
+{
+  "contexts": [
+    {
+      "name": "patient",
+      "initial_data": ["name", "sex", "age"],
+      "goals": []
+    },
+    {
+      "name": "culture",
+      "initial_data": ["site", "days-old"],
+      "goals": []
+    },
+    {
+      "name": "organism",
+      "initial_data": [],
+      "goals": ["identity"]
+    }
+  ],
+  "parameters": [
+    {
+      "name": "name",
+      "context_name": "patient",
+      "ask_first": true,
+      "kind": "String",
+      "valid": []
+    },
+    {
+      "name": "sex",
+      "context_name": "patient",
+      "ask_first": true,
+      "kind": "String",
+      "valid": ["M", "F"]
+    },
+    {
+      "name": "age",
+      "context_name": "patient",
+      "ask_first": true,
+      "kind": "Integer",
+      "valid": []
+    },
+    {
+      "name": "compromised-host",
+      "context_name": "patient",
+      "ask_first": false,
+      "kind": "Boolean",
+      "valid": []
+    },
+    {
+      "name": "site",
+      "context_name": "culture",
+      "ask_first": true,
+      "kind": "String",
+      "valid": ["blood", "urine", "sputum", "csf", "wound"]
+    },
+    {
+      "name": "days-old",
+      "context_name": "culture",
+      "ask_first": true,
+      "kind": "Integer",
+      "valid": []
+    },
+    {
+      "name": "identity",
+      "context_name": "organism",
+      "ask_first": true,
+      "kind": "String",
+      "valid": [
+        "pseudomonas",
+        "klebsiella",
+        "enterobacteriaceae",
+        "staphylococcus",
+        "bacteroides",
+        "streptococcus",
+        "neisseria-meningitidis"
+      ]
+    },
+    {
+      "name": "gram",
+      "context_name": "organism",
+      "ask_first": true,
+      "kind": "String",
+      "valid": ["acid-fast", "pos", "neg"]
+    },
+    {
+      "name": "morphology",
+      "context_name": "organism",
+      "ask_first": false,
+      "kind": "String",
+      "valid": ["rod", "coccus"]
+    },
+    {
+      "name": "aerobicity",
+      "context_name": "organism",
+      "ask_first": false,
+      "kind": "String",
+      "valid": ["aerobic", "anaerobic"]
+    },
+    {
+      "name": "growth-conformation",
+      "context_name": "organism",
+      "ask_first": false,
+      "kind": "String",
+      "valid": ["chains", "pairs", "clumps"]
+    }
+  ],
+  "rules": [
+    {
+      "num": 52,
+      "premises": [
+        ["site", "culture", "==", "blood"],
+        ["gram", "organism", "==", "neg"],
+        ["morphology", "organism", "==", "rod"],
+        ["aerobicity", "organism", "==", "anaerobic"]
+      ],
+      "conclusions": [
+        ["identity", "organism", "==", "bacteroides"]
+      ],
+      "cf": 0.4
+    },
+    {
+      "num": 71,
+      "premises": [
+        ["gram", "organism", "==", "pos"],
+        ["morphology", "organism", "==", "coccus"],
+        ["growth-conformation", "organism", "==", "clumps"]
+      ],
+      "conclusions": [
+        ["identity", "organism", "==", "staphylococcus"]
+      ],
+      "cf": 0.7
+    },
+    {
+      "num": 73,
+      "premises": [
+        ["site", "culture", "==", "blood"],
+        ["gram", "organism", "==", "neg"],
+        ["morphology", "organism", "==", "rod"],
+        ["aerobicity", "organism", "==", "anaerobic"]
+      ],
+      "conclusions": [
+        ["identity", "organism", "==", "bacteroides"]
+      ],
+      "cf": 0.9
+    },
+    {
+      "num": 75,
+      "premises": [
+        ["gram", "organism", "==", "neg"],
+        ["morphology", "organism", "==", "rod"],
+        ["compromised-host", "patient", "==", "true"]
+      ],
+      "conclusions": [
+        ["identity", "organism", "==", "pseudomonas"]
+      ],
+      "cf": 0.6
+    },
+    {
+      "num": 107,
+      "premises": [
+        ["gram", "organism", "==", "neg"],
+        ["morphology", "organism", "==", "rod"],
+        ["aerobicity", "organism", "==", "aerobic"]
+      ],
+      "conclusions": [
+        ["identity", "organism", "==", "enterobacteriaceae"]
+      ],
+      "cf": 0.8
+    },
+    {
+      "num": 165,
+      "premises": [
+        ["gram", "organism", "==", "pos"],
+        ["morphology", "organism", "==", "coccus"],
+        ["growth-conformation", "organism", "==", "chains"]
+      ],
+      "conclusions": [
+        ["identity", "organism", "==", "streptococcus"]
+      ],
+      "cf": 0.7
+    },
+    {
+      "num": 200,
+      "premises": [
+        ["site", "culture", "==", "blood"],
+        ["gram", "organism", "==", "neg"],
+        ["morphology", "organism", "==", "coccus"]
+      ],
+      "conclusions": [
+        ["identity", "organism", "==", "neisseria-meningitidis"]
+      ],
+      "cf": 0.8
+    },
+    {
+      "num": 201,
+      "premises": [
+        ["gram", "organism", "==", "neg"],
+        ["morphology", "organism", "==", "coccus"],
+        ["growth-conformation", "organism", "==", "pairs"]
+      ],
+      "conclusions": [
+        ["identity", "organism", "==", "neisseria-meningitidis"]
+      ],
+      "cf": 0.7
+    },
+    {
+      "num": 210,
+      "premises": [
+        ["site", "culture", "==", "csf"],
+        ["gram", "organism", "==", "neg"],
+        ["morphology", "organism", "==", "coccus"]
+      ],
+      "conclusions": [
+        ["identity", "organism", "==", "neisseria-meningitidis"]
+      ],
+      "cf": 0.9
+    },
+    {
+      "num": 211,
+      "premises": [
+        ["site", "culture", "==", "urine"],
+        ["gram", "organism", "==", "neg"],
+        ["morphology", "organism", "==", "rod"]
+      ],
+      "conclusions": [
+        ["identity", "organism", "==", "enterobacteriaceae"]
+      ],
+      "cf": 0.75
+    },
+    {
+      "num": 212,
+      "premises": [
+        ["site", "culture", "==", "wound"],
+        ["gram", "organism", "==", "pos"],
+        ["morphology", "organism", "==", "coccus"],
+        ["growth-conformation", "organism", "==", "clumps"]
+      ],
+      "conclusions": [
+        ["identity", "organism", "==", "staphylococcus"]
+      ],
+      "cf": 0.85
+    }
+  ]
+}
