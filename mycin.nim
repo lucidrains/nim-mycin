@@ -188,7 +188,7 @@ proc from_string(
 
     if (
       integer_value.is_some and
-      (valid.is_none or valid.get.contains(integer_value.get))
+      (valid.is_none or valid.get.len == 0 or valid.get.contains(integer_value.get))
     ):
       result = some(ParameterValue(kind: Integer, integer_value: integer_value.get))
 
@@ -678,6 +678,13 @@ proc array_to_seq(expert: ExpertSystem, cond_array: seq[array[4, string]]): seq[
         cond_json[1],
         operation,
         param_value.string_value
+      )
+    of Integer:
+      cond(
+        cond_json[0],
+        cond_json[1],
+        operation,
+        param_value.integer_value
       )
     else:
       cond(
