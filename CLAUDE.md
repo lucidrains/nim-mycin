@@ -55,3 +55,6 @@ Rules follow the format:
   "cf": 0.8
 }
 ```
+
+## Style
+Prioritize simple, concise, pure functions. Think ultrahard about whether the solution is too complicated before getting back to me
