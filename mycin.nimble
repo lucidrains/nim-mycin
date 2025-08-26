@@ -2,9 +2,15 @@ version       = "0.1.0"
 author        = "Phil Wang"
 description   = "An expert system based on MYCIN"
 license       = "MIT"
-srcDir        = "."
+srcDir        = "src"
 
 requires "nim >= 1.0.0"
 requires "karax"
 
-bin = "mycin", "mycin_web"
+bin = @["mycin"]
+
+task test, "Run tests":
+  exec "nim compile --run tests/test_mycin.nim"
+
+task buildweb, "Build web version":
+  exec "nim js src/mycin_web.nim"

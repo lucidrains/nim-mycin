@@ -781,9 +781,9 @@ when is_main_module:
   let args = command_line_params()
 
   let json_file_path = if args.len == 0:
-    "./mycin.json"
+    "./data/mycin.json"
   else:
-    &"{args[0]}.json"
+    &"./data/{args[0]}.json"
 
   let expert = ExpertSystem()
 
