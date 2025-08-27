@@ -1,0 +1,38 @@
+name: Test
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - uses: jiro4989/setup-nim-action@v2
+      with:
+        nim-version: 'stable'
+    
+    - name: Print Nim version
+      run: |
+        nim --version
+        nimble --version
+    
+    - name: Install dependencies
+      run: nimble install -y
+    
+    - name: Run tests
+      run: nimble test
+    
+    - name: Build project
+      run: nimble build
+    
+    - name: Compile CLI version
+      run: nim compile src/mycin.nim
+    
+    - name: Compile web version
+      run: nim js src/mycin_web.nim
