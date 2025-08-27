@@ -5,7 +5,7 @@ import ./mycin
 
 var expert = ExpertSystem()
 
-const expert_json_string = static_read("./mycin.json")
+const expert_json_string = static_read("../data/mycin.json")
 
 let expert_json = parse_json(expert_json_string)
 let rules_json = expert_json.to(RulesJson)
