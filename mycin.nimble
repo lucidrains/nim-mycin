@@ -6,6 +6,7 @@ srcDir        = "src"
 
 requires "nim >= 1.0.0"
 requires "karax"
+requires "static_server"
 
 bin = @["mycin"]
 
@@ -14,3 +15,6 @@ task test, "Run tests":
 
 task buildweb, "Build web version":
   exec "nim js src/mycin_web.nim"
+
+task start_webserver, "Start web server for Karax app":
+  exec "static_server ."
