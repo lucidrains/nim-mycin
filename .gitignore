@@ -2,4 +2,5 @@ nimcache/
 nimblecache/
 htmldocs/
 
+src/mycin
 *.js
