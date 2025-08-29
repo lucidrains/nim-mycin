@@ -15,21 +15,24 @@ expert.populate_from_json(rules_json)
 # add rules
 
 proc create_dom(): VNode =
-  result = buildHtml(tdiv):
-    tdiv:
-      text "Contexts"
+  result = buildHtml(tdiv(class="container")):
+    tdiv(class="column"):
+      h2:
+        text "Context"
       ul:
         for context in expert.contexts:
           li:
             text context.name
-    tdiv:
-      text "Parameters"
+    tdiv(class="column"):
+      h2:
+        text "Parameters"
       ul:
         for param in expert.parameters:
           li:
             text param.name
-    tdiv:
-      text "Rules"
+    tdiv(class="column"):
+      h2:
+        text "Rules"
       ul:
         for rule in expert.rules:
           li:

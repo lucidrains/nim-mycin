@@ -1,3 +1,33 @@
 body {
   background-color: #e0e0e0;
 }
+
+.container {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  padding: 2rem;
+}
+
+.column {
+  flex: 1;
+  max-width: 300px;
+  padding: 1rem;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.column h2 {
+  margin-top: 0;
+  text-align: center;
+}
+
+.column ul {
+  list-style-type: none;
+  padding-left: 0;
+}
+
+.column li {
+  padding: 0.25rem 0;
+}
