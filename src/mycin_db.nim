@@ -11,7 +11,7 @@ type
     id*: int
     name*: string
     context*: string
-    paramType*: string
+    param_type*: string
     choices*: string  # JSON array
     
   Rule* = ref object
@@ -21,20 +21,20 @@ type
     conclusions*: string  # JSON array
     cf*: float
 
-proc setupDB*(dbPath: string = "mycin.db"): auto =
-  result = openDatabase(dbPath)
+proc setup_db*(db_path: string = "mycin.db"): auto =
+  result = openDatabase(db_path)
   result.createTable(Context)
   result.createTable(Parameter)
   result.createTable(Rule)
 
-proc teardownDB*(db: auto) =
+proc teardown_db*(db: auto) =
   db.dropTable(Rule)
   db.dropTable(Parameter)
   db.dropTable(Context)
   db.close()
 
 when isMainModule:
-  let db = setupDB()
+  let db = setup_db()
   
   # Test context
   var ctx = Context(name: "patient", goal: "identity")
@@ -44,7 +44,7 @@ when isMainModule:
   var param = Parameter(
     name: "burn",
     context: "patient",
-    paramType: "Boolean",
+    param_type: "Boolean",
     choices: $ %*["yes", "no"]
   )
   db.insert(param)
@@ -63,5 +63,5 @@ when isMainModule:
   echo "Parameters: ", db.filter(Parameter).len
   echo "Rules: ", db.filter(Rule).len
   
-  teardownDB(db)
+  teardown_db(db)
   echo "Database torn down"

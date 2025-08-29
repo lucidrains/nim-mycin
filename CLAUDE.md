@@ -27,6 +27,9 @@ nim compile --run src/mycin.nim
 ./src/mycin mycin-from-claude
 ./src/mycin mycin-from-gemini
 
+# Run with test input (avoids EOF error in non-interactive environments)
+echo -e "John Doe\n42\nmale\nblood\n3\nunknown\nunknown\nunknown" | ./src/mycin
+
 # Compile web version to JavaScript
 nim js src/mycin_web.nim
 ```
