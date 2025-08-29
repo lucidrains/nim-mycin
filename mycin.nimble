@@ -21,4 +21,5 @@ task buildweb, "Build web version":
   exec "cp src/mycin_web.js static/"
 
 task server, "Start API server":
+  exec "nimble buildweb"
   exec "nim compile --run src/api_server.nim"

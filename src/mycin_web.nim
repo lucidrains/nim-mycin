@@ -18,21 +18,21 @@ proc create_dom(): VNode =
   result = buildHtml(tdiv(class="container")):
     tdiv(class="column"):
       h2:
-        text "Context"
+        text "context"
       ul:
         for context in expert.contexts:
           li:
             text context.name
     tdiv(class="column"):
       h2:
-        text "Parameters"
+        text "parameters"
       ul:
         for param in expert.parameters:
           li:
             text param.name
     tdiv(class="column"):
       h2:
-        text "Rules"
+        text "rules"
       ul:
         for rule in expert.rules:
           li:
