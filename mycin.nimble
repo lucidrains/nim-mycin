@@ -7,6 +7,8 @@ srcDir        = "src"
 requires "nim >= 1.0.0"
 requires "karax"
 requires "static_server"
+requires "db_connector"
+requires "debby"
 
 bin = @["mycin"]
 

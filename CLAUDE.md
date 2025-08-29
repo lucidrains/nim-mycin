@@ -63,4 +63,4 @@ Rules follow the format:
 ```
 
 ## Style
-Prioritize simple, concise, pure functions. Think ultrahard about whether the solution is too complicated before getting back to me
+Prioritize simple, concise, pure functions. Think ultrahard about whether the solution is too complicated before getting back to me. Please follow my exact instructions and give me the minimal code, no fluff or anything extraneous

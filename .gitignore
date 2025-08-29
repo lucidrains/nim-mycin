@@ -2,5 +2,13 @@ nimcache/
 nimblecache/
 htmldocs/
 
+# binaries
+
 src/mycin
+src/mycin_db
+tests/test_mycin
+
+# db and compiled js
+
+*.db
 *.js
