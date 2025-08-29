@@ -6,6 +6,7 @@ htmldocs/
 
 src/mycin
 src/mycin_db
+src/api_server
 tests/test_mycin
 
 # db and compiled js

@@ -9,6 +9,7 @@ requires "karax"
 requires "static_server"
 requires "db_connector"
 requires "debby"
+requires "mummy"
 
 bin = @["mycin"]
 
@@ -20,3 +21,6 @@ task buildweb, "Build web version":
 
 task start_webserver, "Start web server for Karax app":
   exec "static_server static"
+
+task server, "Start API server":
+  exec "nim compile --run src/api_server.nim"
