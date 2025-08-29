@@ -46,21 +46,21 @@
       "valid": []
     },
     {
-      "name": "recent_antibiotics", // New Parameter
+      "name": "recent_antibiotics",
       "context_name": "patient",
       "ask_first": false,
       "kind": "Boolean",
       "valid": []
     },
     {
-        "name": "underlying_condition", // New Parameter
+        "name": "underlying_condition",
         "context_name": "patient",
         "ask_first": false,
         "kind": "String",
         "valid": ["none", "diabetes", "cancer", "transplant", "other_immunosuppression"]
     },
     {
-      "name": "site", // Modified Parameter (added valid options)
+      "name": "site",
       "context_name": "culture",
       "ask_first": true,
       "kind": "String",
@@ -76,11 +76,11 @@
     {
       "name": "identity",
       "context_name": "organism",
-      "ask_first": true, // Still ask first as it might be known upfront
+      "ask_first": true,
       "kind": "String",
       "valid": [
         "pseudomonas",
-        "klebsiella", // Note: Klebsiella is often grouped under enterobacteriaceae
+        "klebsiella",
         "enterobacteriaceae",
         "staphylococcus",
         "bacteroides",
@@ -97,7 +97,7 @@
     {
       "name": "morphology",
       "context_name": "organism",
-      "ask_first": false, // Often determined after gram stain
+      "ask_first": false,
       "kind": "String",
       "valid": ["rod", "coccus"]
     },
@@ -106,35 +106,35 @@
       "context_name": "organism",
       "ask_first": false,
       "kind": "String",
-      "valid": ["aerobic", "facultative", "anaerobic"] // Added facultative
+      "valid": ["aerobic", "facultative", "anaerobic"]
     },
     {
       "name": "growth-conformation",
       "context_name": "organism",
       "ask_first": false,
       "kind": "String",
-      "valid": ["chains", "pairs", "clumps", "tetrads"] // Added tetrads
+      "valid": ["chains", "pairs", "clumps", "tetrads"]
     },
     {
-        "name": "catalase_test", // New Parameter
+        "name": "catalase_test",
         "context_name": "organism",
         "ask_first": false,
         "kind": "String",
         "valid": ["positive", "negative"]
     },
     {
-        "name": "oxidase_test", // New Parameter
+        "name": "oxidase_test",
         "context_name": "organism",
         "ask_first": false,
         "kind": "String",
         "valid": ["positive", "negative"]
     },
     {
-        "name": "hemolysis_type", // New Parameter
+        "name": "hemolysis_type",
         "context_name": "organism",
         "ask_first": false,
         "kind": "String",
-        "valid": ["alpha", "beta", "gamma", "none"] // Added none for non-blood agar
+        "valid": ["alpha", "beta", "gamma", "none"]
     }
   ],
   "rules": [
@@ -149,20 +149,20 @@
       "conclusions": [
         ["identity", "organism", "==", "bacteroides"]
       ],
-      "cf": 0.4 // Low confidence, might be other anaerobes
+      "cf": 0.4
     },
     {
-      "num": 71, // Modified Rule (added catalase)
+      "num": 71,
       "premises": [
         ["gram", "organism", "==", "pos"],
         ["morphology", "organism", "==", "coccus"],
         ["growth-conformation", "organism", "==", "clumps"],
-        ["catalase_test", "organism", "==", "positive"] // Added premise
+        ["catalase_test", "organism", "==", "positive"]
       ],
       "conclusions": [
         ["identity", "organism", "==", "staphylococcus"]
       ],
-      "cf": 0.8 // Increased CF slightly
+      "cf": 0.8
     },
     {
       "num": 73,
@@ -175,7 +175,7 @@
       "conclusions": [
         ["identity", "organism", "==", "bacteroides"]
       ],
-      "cf": 0.9 // Higher confidence if confirmed anaerobic from blood
+      "cf": 0.9
     },
     {
       "num": 75,
@@ -183,15 +183,14 @@
         ["gram", "organism", "==", "neg"],
         ["morphology", "organism", "==", "rod"],
         ["compromised-host", "patient", "==", "true"]
-        // Consider adding ["aerobicity", "organism", "==", "aerobic"] here? Pseudomonas is aerobic.
       ],
       "conclusions": [
         ["identity", "organism", "==", "pseudomonas"]
       ],
-      "cf": 0.6 // Host status is suggestive but not definitive
+      "cf": 0.6
     },
     {
-        "num": 95, // New Rule (UTI context)
+        "num": 95,
         "premises": [
             ["site", "culture", "==", "urine"],
             ["gram", "organism", "==", "neg"],
@@ -200,36 +199,33 @@
         "conclusions": [
             ["identity", "organism", "==", "enterobacteriaceae"]
         ],
-        "cf": 0.6 // Common, but other GNRs cause UTIs
+        "cf": 0.6
     },
     {
       "num": 107,
       "premises": [
         ["gram", "organism", "==", "neg"],
-        ["morphology", "organism", "==", "rod"],
-        // Removed aerobicity check as Enterobacteriaceae are often facultative
-        // Kept rule for broader GNR category if more specific tests aren't available
+        ["morphology", "organism", "==", "rod"]
       ],
       "conclusions": [
-        ["identity", "organism", "==", "enterobacteriaceae"] // Could be Klebsiella, E. coli, etc.
+        ["identity", "organism", "==", "enterobacteriaceae"]
       ],
-      "cf": 0.5 // Lowered CF as it's less specific now without aerobicity/oxidase
+      "cf": 0.5
     },
     {
-        "num": 110, // New Rule (using oxidase for Enterobacteriaceae)
+        "num": 110,
         "premises": [
             ["gram", "organism", "==", "neg"],
             ["morphology", "organism", "==", "rod"],
             ["oxidase_test", "organism", "==", "negative"]
-            // Aerobicity could be aerobic or facultative
         ],
         "conclusions": [
             ["identity", "organism", "==", "enterobacteriaceae"]
         ],
-        "cf": 0.9 // Oxidase negative is a strong indicator for this family
+        "cf": 0.9
     },
     {
-        "num": 112, // New Rule (using oxidase for Pseudomonas)
+        "num": 112,
         "premises": [
             ["gram", "organism", "==", "neg"],
             ["morphology", "organism", "==", "rod"],
@@ -239,34 +235,34 @@
         "conclusions": [
             ["identity", "organism", "==", "pseudomonas"]
         ],
-        "cf": 0.8 // Oxidase positive + aerobic GNR strongly suggests Pseudomonas
+        "cf": 0.8
     },
     {
-      "num": 165, // Modified Rule (added catalase)
+      "num": 165,
       "premises": [
         ["gram", "organism", "==", "pos"],
         ["morphology", "organism", "==", "coccus"],
         ["growth-conformation", "organism", "==", "chains"],
-        ["catalase_test", "organism", "==", "negative"] // Added premise
+        ["catalase_test", "organism", "==", "negative"]
       ],
       "conclusions": [
         ["identity", "organism", "==", "streptococcus"]
       ],
-      "cf": 0.75 // Increased CF slightly
+      "cf": 0.75
     },
     {
-        "num": 167, // New Rule (using hemolysis for Streptococcus)
+        "num": 167,
         "premises": [
             ["gram", "organism", "==", "pos"],
             ["morphology", "organism", "==", "coccus"],
             ["growth-conformation", "organism", "==", "chains"],
             ["catalase_test", "organism", "==", "negative"],
-            ["hemolysis_type", "organism", "==", "beta"] // Added premise
+            ["hemolysis_type", "organism", "==", "beta"]
         ],
         "conclusions": [
-            ["identity", "organism", "==", "streptococcus"] // Beta-hemolysis common in pathogenic Strep
+            ["identity", "organism", "==", "streptococcus"]
         ],
-        "cf": 0.85 // Higher confidence with beta-hemolysis confirmation
+        "cf": 0.85
     }
   ]
 }
