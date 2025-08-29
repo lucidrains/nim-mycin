@@ -18,9 +18,7 @@ task test, "Run tests":
 
 task buildweb, "Build web version":
   exec "nim js src/mycin_web.nim"
-
-task start_webserver, "Start web server for Karax app":
-  exec "static_server static"
+  exec "cp src/mycin_web.js static/"
 
 task server, "Start API server":
   exec "nim compile --run src/api_server.nim"
